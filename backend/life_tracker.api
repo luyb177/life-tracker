@@ -1,0 +1,14 @@
+syntax = "v1"
+
+info (
+    title:   "life-tracker API"
+    desc:    "个人生活账本 API"
+    author:  "life-tracker team"
+    version: "1.0"
+)
+
+
+// ══════════════════════════════════════════════
+// Common
+// ══════════════════════════════════════════════
+// model
