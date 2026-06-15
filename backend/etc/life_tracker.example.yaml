@@ -1,0 +1,23 @@
+Name: life_tracker
+Host: 0.0.0.0
+Port: 8889
+
+Log:
+  ServiceName: life-tracker
+  Mode: console
+  Encoding: plain
+  Level: info
+  Stat: true
+
+MySQLConf:
+  DSN: root:your-password@tcp(127.0.0.1:3306)/life_tracker?charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai&timeout=10s&readTimeout=30s&writeTimeout=30s
+
+RedisConf:
+  Addr: 127.0.0.1:6379
+  Password: ""
+  DB: 0
+
+JWTConf:
+  Secret: your-secret-here
+  ExpireS: 900
+  RefreshExpireS: 604800

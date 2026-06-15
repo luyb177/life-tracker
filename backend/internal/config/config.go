@@ -1,0 +1,24 @@
+package config
+
+import "github.com/zeromicro/go-zero/rest"
+
+type Config struct {
+	rest.RestConf
+	MySQLConf struct {
+		DSN string
+	}
+	RedisConf RedisConf
+	JWTConf   JWTConf
+}
+
+type JWTConf struct {
+	Secret         string
+	ExpireS        int64 // access token 过期时间，单位：秒，默认 900（15min）
+	RefreshExpireS int64 // refresh token 过期时间，单位：秒，默认 604800（7d）
+}
+
+type RedisConf struct {
+	Addr     string
+	Password string
+	DB       int
+}
