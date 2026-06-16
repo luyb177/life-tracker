@@ -1,6 +1,8 @@
 package constvar
 
-import "time"
+import (
+	"time"
+)
 
 // Context keys
 type contextKey string
@@ -23,3 +25,11 @@ const (
 )
 
 const VerifyCodeExpire = 5 * time.Minute
+
+// 分页
+const (
+	DefaultPageSize = 20
+)
+
+// TimeLocation 数据库时区，与 DSN 中 loc 参数保持一致
+var TimeLocation, _ = time.LoadLocation("Asia/Shanghai")

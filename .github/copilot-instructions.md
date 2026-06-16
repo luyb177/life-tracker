@@ -10,7 +10,7 @@ cd backend && go build ./...
 cd backend && go mod tidy
 
 # Generate code from API definition (run after editing .api file)
-cd backend && goctl api go -api life_tracker.api -dir .
+cd backend && goctl api go -api life_tracker.api -dir . --style go_zero
 # Note: goctl skips existing files — manually remove files you want regenerated first.
 # After generation, delete the stub lifetracker.go if life_tracker.go already exists.
 ```

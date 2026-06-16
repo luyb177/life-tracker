@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	auth "github.com/luyb177/life-tracker/backend/internal/handler/auth"
+	summary "github.com/luyb177/life-tracker/backend/internal/handler/summary"
 	user "github.com/luyb177/life-tracker/backend/internal/handler/user"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 
@@ -45,6 +46,45 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.JWTMiddleware, serverCtx.IPMiddleware},
+			[]rest.Route{
+				{
+					// 创建总结（用户手动）
+					Method:  http.MethodPost,
+					Path:    "/create",
+					Handler: summary.CreateSummaryHandler(serverCtx),
+				},
+				{
+					// 删除总结
+					Method:  http.MethodPost,
+					Path:    "/delete",
+					Handler: summary.DeleteSummaryHandler(serverCtx),
+				},
+				{
+					// AI 生成总结
+					Method:  http.MethodPost,
+					Path:    "/generate",
+					Handler: summary.GenerateAISummaryHandler(serverCtx),
+				},
+				{
+					// 总结列表
+					Method:  http.MethodGet,
+					Path:    "/list",
+					Handler: summary.ListSummaryHandler(serverCtx),
+				},
+				{
+					// 更新总结
+					Method:  http.MethodPost,
+					Path:    "/update",
+					Handler: summary.UpdateSummaryHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/summary"),
 	)
 
 	server.AddRoutes(

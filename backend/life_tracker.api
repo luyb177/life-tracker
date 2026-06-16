@@ -29,12 +29,27 @@ type (
 		ISP      string `json:"isp"`
 		ISOCode  string `json:"iso_code"`
 	}
+	SummaryInfo {
+		ID                uint64 `json:"id"`
+		PeriodType        uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+		PeriodStart       string `json:"period_start"` // "2006-01-02" / "2006-W01" / "2006-01" / "2006"
+		PeriodEnd         string `json:"period_end"`
+		Source            uint8  `json:"source"` // 1=AI, 2=用户
+		SummaryContent    string `json:"summary_content"`
+		SuggestionContent string `json:"suggestion_content,optional"`
+		CreatedAt         string `json:"created_at"`
+		UpdatedAt         string `json:"updated_at"`
+	}
 )
 
 type (
 	Response  {}
 	IDResponse {
 		ID uint64 `json:"id"`
+	}
+	PageToken {
+		ID        uint64 `json:"id"`
+		CreatedAt string `json:"created_at"`
 	}
 )
 
@@ -125,5 +140,67 @@ service life_tracker {
 	@doc "修改密码"
 	@handler ChangePassword
 	post /change_password (ChangePasswordReq) returns (Response)
+}
+
+// ══════════════════════════════════════════════
+// Summary 总结（需 JWT）
+// ══════════════════════════════════════════════
+type (
+	CreateSummaryReq {
+		PeriodType        uint8  `json:"period_type"`
+		PeriodStart       string `json:"period_start"`
+		PeriodEnd         string `json:"period_end"`
+		SummaryContent    string `json:"summary_content"`
+		SuggestionContent string `json:"suggestion_content,optional"`
+	}
+	UpdateSummaryReq {
+		ID                uint64 `json:"id"`
+		SummaryContent    string `json:"summary_content,optional"`
+		SuggestionContent string `json:"suggestion_content,optional"`
+	}
+	ListSummaryReq {
+		PeriodType uint8  `form:"period_type,optional"`
+		PageSize   uint32 `form:"page_size"`
+		PageToken  string `form:"page_token,optional"`
+	}
+	ListSummaryResp {
+		List      []SummaryInfo `json:"list"`
+		PageToken string        `json:"page_token"`
+		HasMore   bool          `json:"has_more"`
+	}
+	GenerateAISummaryReq {
+		PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+		PeriodStart string `json:"period_start"` // 指定周期的起始日期
+	}
+	DeleteSummaryReq {
+		ID uint64 `json:"id"`
+	}
+)
+
+@server (
+	prefix:     /api/v1/summary
+	group:      summary
+	middleware: JWTMiddleware,IPMiddleware
+)
+service life_tracker {
+	@doc "创建总结（用户手动）"
+	@handler CreateSummary
+	post /create (CreateSummaryReq) returns (Response)
+
+	@doc "更新总结"
+	@handler UpdateSummary
+	post /update (UpdateSummaryReq) returns (Response)
+
+	@doc "总结列表"
+	@handler ListSummary
+	get /list (ListSummaryReq) returns (ListSummaryResp)
+
+	@doc "AI 生成总结"
+	@handler GenerateAISummary
+	post /generate (GenerateAISummaryReq) returns (SummaryInfo)
+
+	@doc "删除总结"
+	@handler DeleteSummary
+	post /delete (DeleteSummaryReq) returns (Response)
 }
 

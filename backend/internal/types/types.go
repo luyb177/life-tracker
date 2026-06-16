@@ -12,6 +12,23 @@ type ChangePasswordReq struct {
 	NewPassword string `json:"new_password"`
 }
 
+type CreateSummaryReq struct {
+	PeriodType        uint8  `json:"period_type"`
+	PeriodStart       string `json:"period_start"`
+	PeriodEnd         string `json:"period_end"`
+	SummaryContent    string `json:"summary_content"`
+	SuggestionContent string `json:"suggestion_content,optional"`
+}
+
+type DeleteSummaryReq struct {
+	ID uint64 `json:"id"`
+}
+
+type GenerateAISummaryReq struct {
+	PeriodType  uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报
+	PeriodStart string `json:"period_start"` // 指定周期的起始日期
+}
+
 type IDResponse struct {
 	ID uint64 `json:"id"`
 }
@@ -25,6 +42,18 @@ type IPLocation struct {
 	ISOCode  string `json:"iso_code"`
 }
 
+type ListSummaryReq struct {
+	PeriodType uint8  `form:"period_type,optional"`
+	PageSize   uint32 `form:"page_size"`
+	PageToken  string `form:"page_token,optional"`
+}
+
+type ListSummaryResp struct {
+	List      []SummaryInfo `json:"list"`
+	PageToken string        `json:"page_token"`
+	HasMore   bool          `json:"has_more"`
+}
+
 type LoginReq struct {
 	Target   string `json:"target"`
 	Channel  int32  `json:"channel"`
@@ -35,6 +64,11 @@ type LoginResp struct {
 	Token        string   `json:"token"`
 	RefreshToken string   `json:"refresh_token"`
 	UserInfo     UserInfo `json:"user_info"`
+}
+
+type PageToken struct {
+	ID        uint64 `json:"id"`
+	CreatedAt string `json:"created_at"`
 }
 
 type RefreshTokenReq struct {
@@ -60,6 +94,24 @@ type SendVerificationCodeReq struct {
 	Target  string `json:"target"`
 	Channel int32  `json:"channel"` // 1: email
 	Purpose int32  `json:"purpose"` // 1: registration, 2: password reset
+}
+
+type SummaryInfo struct {
+	ID                uint64 `json:"id"`
+	PeriodType        uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报
+	PeriodStart       string `json:"period_start"` // "2006-01-02" / "2006-W01" / "2006-01" / "2006"
+	PeriodEnd         string `json:"period_end"`
+	Source            uint8  `json:"source"` // 1=AI, 2=用户
+	SummaryContent    string `json:"summary_content"`
+	SuggestionContent string `json:"suggestion_content,optional"`
+	CreatedAt         string `json:"created_at"`
+	UpdatedAt         string `json:"updated_at"`
+}
+
+type UpdateSummaryReq struct {
+	ID                uint64 `json:"id"`
+	SummaryContent    string `json:"summary_content,optional"`
+	SuggestionContent string `json:"suggestion_content,optional"`
 }
 
 type UpdateUserInfoReq struct {
