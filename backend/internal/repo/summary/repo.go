@@ -13,6 +13,8 @@ type Repository interface {
 	Update(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 	FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Summary, error)
 	FindByPeriod(ctx context.Context, userID uint64, periodType uint8, periodStart string, tx ...*gorm.DB) (*Summary, error)
+	// FindByPeriodRange 查询某周期类型在时间范围内的总结（用于周报聚合日报、月报聚合周报等）
+	FindByPeriodRange(ctx context.Context, userID uint64, periodType uint8, start, end string, tx ...*gorm.DB) ([]*Summary, error)
 	// ListByUser 游标分页，按 created_at 倒序
 	ListByUser(ctx context.Context, userID uint64, periodType uint8, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Summary, error)
 	Delete(ctx context.Context, id uint64, tx ...*gorm.DB) error
@@ -60,6 +62,15 @@ func (r *repo) FindByPeriod(ctx context.Context, userID uint64, periodType uint8
 		return nil, nil
 	}
 	return &s, err
+}
+
+func (r *repo) FindByPeriodRange(ctx context.Context, userID uint64, periodType uint8, start, end string, tx ...*gorm.DB) ([]*Summary, error) {
+	var list []*Summary
+	err := r.getDB(ctx, tx...).
+		Where("user_id = ? AND period_type = ? AND period_start >= ? AND period_start < ?", userID, periodType, start, end).
+		Order("period_start ASC").
+		Find(&list).Error
+	return list, err
 }
 
 func (r *repo) ListByUser(ctx context.Context, userID uint64, periodType uint8, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Summary, error) {

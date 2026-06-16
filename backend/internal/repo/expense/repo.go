@@ -22,6 +22,17 @@ type Repository interface {
 	ListLogsByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Log, error)
 	// SumByDate 汇总某用户指定日期的总支出
 	SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (float64, error)
+	// SumByDateRange 汇总某用户指定日期范围的总支出
+	SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (float64, error)
+	// SumByDateRangeGrouped 按分类汇总支出
+	SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error)
+}
+
+// CategoryTotal 分类汇总
+type CategoryTotal struct {
+	CategoryID   uint64  `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Total        float64 `json:"total"`
 }
 
 type repo struct {
@@ -114,4 +125,27 @@ func (r *repo) SumByDate(ctx context.Context, userID uint64, date time.Time, tx 
 		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, startOfDay, endOfDay).
 		Scan(&result).Error
 	return result.Total, err
+}
+
+func (r *repo) SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (float64, error) {
+	var result struct {
+		Total float64
+	}
+	err := r.getDB(ctx, tx...).Model(&Log{}).
+		Select("COALESCE(SUM(amount), 0) as total").
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Scan(&result).Error
+	return result.Total, err
+}
+
+func (r *repo) SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error) {
+	var results []CategoryTotal
+	err := r.getDB(ctx, tx...).Model(&Log{}).
+		Select("expense_logs.category_id, expense_categories.name as category_name, COALESCE(SUM(expense_logs.amount), 0) as total").
+		Joins("LEFT JOIN expense_categories ON expense_categories.id = expense_logs.category_id").
+		Where("expense_logs.user_id = ? AND expense_logs.occurred_at >= ? AND expense_logs.occurred_at < ?", userID, start, end).
+		Group("expense_logs.category_id, expense_categories.name").
+		Order("total DESC").
+		Scan(&results).Error
+	return results, err
 }

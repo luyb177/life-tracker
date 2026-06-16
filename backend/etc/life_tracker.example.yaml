@@ -31,3 +31,8 @@ JWTConf:
   Secret: your-secret-here
   ExpireS: 900
   RefreshExpireS: 604800
+
+AIConf:
+  Endpoint: https://api.deepseek.com
+  APIKey: your-deepseek-api-key
+  Model: deepseek-chat

@@ -1,0 +1,23 @@
+FROM golang:1.23-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /cron ./cmd/cron/
+
+FROM alpine:3.21
+RUN apk add --no-cache ca cert tzdata curl
+ENV TZ=Asia/Shanghai
+COPY --from=builder /cron /usr/local/bin/cron
+COPY etc/life_tracker.yaml /etc/life_tracker.yaml
+COPY data/ /data/
+
+# 默认每天早上 8 点执行日报，每周一 8 点执行周报，每月 1 号 8 点执行月报，每年 1 月 1 号 8 点执行年报
+# 需要单独部署 cron 容器，配合外部 cron schedule 或使用容器内 crond
+
+# 使用方式:
+# docker run life-tracker-cron cron summary -t 1  # 日报
+# docker run life-tracker-cron cron summary -t 2  # 周报
+# docker run life-tracker-cron cron summary -t 3  # 月报
+# docker run life-tracker-cron cron summary -t 4  # 年报
+ENTRYPOINT ["/usr/local/bin/cron"]

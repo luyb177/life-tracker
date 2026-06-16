@@ -15,6 +15,13 @@ type Config struct {
 	EmailConf     EmailConf
 	IP2RegionConf IP2RegionConf
 	JWTConf       JWTConf
+	AIConf        AIConf
+}
+
+type AIConf struct {
+	Endpoint string // DeepSeek API endpoint
+	APIKey   string
+	Model    string // 默认 deepseek-chat
 }
 
 type IP2RegionConf struct {
