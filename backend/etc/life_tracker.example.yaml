@@ -17,6 +17,12 @@ RedisConf:
   Password: ""
   DB: 0
 
+EmailConf:
+  From: ""
+  Password: ""
+  SMTPHost: ""
+  SMTPPort: 465
+
 JWTConf:
   Secret: your-secret-here
   ExpireS: 900

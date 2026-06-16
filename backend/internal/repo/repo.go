@@ -1,22 +1,29 @@
 package repo
 
 import (
+	"github.com/luyb177/life-tracker/backend/internal/repo/token"
+	"github.com/luyb177/life-tracker/backend/internal/repo/user"
+	"github.com/luyb177/life-tracker/backend/internal/repo/verify"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Repositories struct {
-	db *gorm.DB
+	User   user.Repository
+	Verify verify.Repository
+	Token  *token.Repository
+	db     *gorm.DB
 }
 
-// NewRepositories creates Repositories with both Redis and MySQL.
 func NewRepositories(redisClient *redis.Client, db *gorm.DB) *Repositories {
 	return &Repositories{
-		db: db,
+		User:   user.NewRepository(redisClient, db),
+		Verify: verify.NewVerifyRepo(redisClient),
+		Token:  token.NewRepository(redisClient),
+		db:     db,
 	}
 }
 
-// Transaction starts a MySQL transaction.
 func (r *Repositories) Transaction(fn func(tx *gorm.DB) error) error {
 	return r.db.Transaction(fn)
 }

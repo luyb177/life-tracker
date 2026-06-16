@@ -1,0 +1,127 @@
+// Code scaffolded by goctl. Safe to edit.
+// goctl 1.10.1
+
+package auth
+
+import (
+	"context"
+	"strings"
+
+	"github.com/luyb177/life-tracker/backend/common/errorx"
+	"github.com/luyb177/life-tracker/backend/common/jwtx"
+	"github.com/luyb177/life-tracker/backend/internal/constvar"
+	"github.com/luyb177/life-tracker/backend/internal/pkg/email"
+	"github.com/luyb177/life-tracker/backend/internal/pkg/password"
+	"github.com/luyb177/life-tracker/backend/internal/repo/user"
+	"github.com/luyb177/life-tracker/backend/internal/svc"
+	"github.com/luyb177/life-tracker/backend/internal/types"
+
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type LoginLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic {
+	return &LoginLogic{
+		Logger: logx.WithContext(ctx),
+		ctx:    ctx,
+		svcCtx: svcCtx,
+	}
+}
+
+func (l *LoginLogic) Login(req *types.LoginReq) (*types.LoginResp, error) {
+	if resp, err := l.validReq(req); err != nil {
+		return resp, err
+	}
+
+	target := email.CanonicalEmail(req.Target)
+
+	switch req.Channel {
+	case constvar.ChannelEmail:
+		return l.loginByEmail(target, req)
+	default:
+		return nil, errorx.WrapBadRequest("暂仅支持邮箱登录", nil)
+	}
+}
+
+func (l *LoginLogic) loginByEmail(target string, req *types.LoginReq) (*types.LoginResp, error) {
+	u, err := l.svcCtx.Repos.User.FindByEmail(l.ctx, target)
+	if err != nil {
+		l.Errorf("find user by email failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询用户失败", err)
+	}
+	if u == nil {
+		return nil, errorx.WrapBadRequest("邮箱未注册", nil)
+	}
+
+	if !password.Compare(req.Password, u.Password) {
+		return nil, errorx.WrapBadRequest("密码错误", nil)
+	}
+
+	accessToken, err := l.svcCtx.JWTHandler.SetAccessToken(jwtx.ClaimsParams{
+		UserID: u.ID,
+	})
+	if err != nil {
+		l.Errorf("generate access token failed: %v", err)
+		return nil, errorx.WrapInternal("生成令牌失败", err)
+	}
+
+	refreshToken, err := l.svcCtx.JWTHandler.SetRefreshToken(jwtx.ClaimsParams{
+		UserID: u.ID,
+	})
+	if err != nil {
+		l.Errorf("generate refresh token failed: %v", err)
+		return nil, errorx.WrapInternal("生成令牌失败", err)
+	}
+
+	// 解析 refresh token 获取 JTI 并存入 Redis（用于后续刷新时校验和轮换）
+	claims, err := l.svcCtx.JWTHandler.ParseJWTToken(refreshToken)
+	if err != nil {
+		l.Errorf("parse refresh token failed: %v", err)
+		return nil, errorx.WrapInternal("令牌解析失败", err)
+	}
+	if err := l.svcCtx.Repos.Token.Store(l.ctx, u.ID, claims.JTI, l.svcCtx.Config.JWTConf.RefreshExpireDuration()); err != nil {
+		l.Errorf("store refresh token jti failed: %v", err)
+		return nil, errorx.WrapRedisSet("存储令牌失败", err)
+	}
+
+	return &types.LoginResp{
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		UserInfo:     l.buildUserInfo(u),
+	}, nil
+}
+
+func (l *LoginLogic) buildUserInfo(u *user.User) types.UserInfo {
+	return types.UserInfo{
+		UserID:    u.ID,
+		Username:  u.Name,
+		Email:     u.Email,
+		Avatar:    u.Avatar,
+		CreatedAt: u.CreatedAt.Format("2006-01-02 15:04:05"),
+	}
+}
+
+func (l *LoginLogic) validReq(req *types.LoginReq) (*types.LoginResp, error) {
+	target := strings.TrimSpace(req.Target)
+	pwd := req.Password
+
+	switch {
+	case target == "":
+		return nil, errorx.WrapBadRequest("邮箱不能为空", nil)
+	case len(target) > 254:
+		return nil, errorx.WrapBadRequest("邮箱地址过长", nil)
+	case !email.IsValidEmail(email.CanonicalEmail(target)):
+		return nil, errorx.WrapBadRequest("无效的邮箱格式", nil)
+	case pwd == "":
+		return nil, errorx.WrapBadRequest("密码不能为空", nil)
+	case len(pwd) < 6 || len(pwd) > 128:
+		return nil, errorx.WrapBadRequest("密码长度应在6-128位之间", nil)
+	}
+
+	return nil, nil
+}

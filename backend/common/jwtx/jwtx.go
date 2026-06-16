@@ -1,6 +1,8 @@
 package jwtx
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -19,11 +21,10 @@ type Claims struct {
 	jwtv5.RegisteredClaims
 }
 
-// todo refresh_token需要在刷新之后也过期
-
 type ClaimsParams struct {
 	UserID    uint64 `json:"user_id"`
 	TokenType string `json:"token_type"`
+	JTI       string `json:"jti"` // token 唯一 ID，refresh token 刷新后旧 JTI 立即失效
 }
 
 type Handler interface {
@@ -60,13 +61,22 @@ func NewHandler(secret string, accessExpire, refreshExpire time.Duration) (Handl
 	}, nil
 }
 
+// GenerateJTI 生成 16 字节 hex 编码的唯一 token ID
+func GenerateJTI() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 func (h *HandlerImpl) SetAccessToken(claimsParams ClaimsParams) (string, error) {
 	claimsParams.TokenType = TokenTypeAccess
+	claimsParams.JTI = GenerateJTI()
 	return h.signToken(claimsParams, h.AccessExpire)
 }
 
 func (h *HandlerImpl) SetRefreshToken(claimsParams ClaimsParams) (string, error) {
 	claimsParams.TokenType = TokenTypeRefresh
+	claimsParams.JTI = GenerateJTI()
 	return h.signToken(claimsParams, h.RefreshExpire)
 }
 

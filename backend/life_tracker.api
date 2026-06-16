@@ -1,14 +1,120 @@
 syntax = "v1"
 
 info (
-    title:   "life-tracker API"
-    desc:    "个人生活账本 API"
-    author:  "life-tracker team"
-    version: "1.0"
+	title:   "life-tracker API"
+	desc:    "Life Tracker 个人生活记录系统 API"
+	author:  "life-tracker team"
+	version: "1.0"
 )
 
+// ══════════════════════════════════════════════
+// Common Types
+// ══════════════════════════════════════════════
+type (
+	AuthUser {
+		UserID uint64 `json:"user_id"`
+	}
+	UserInfo {
+		UserID    uint64 `json:"user_id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		Avatar    string `json:"avatar"`
+		CreatedAt string `json:"created_at"`
+	}
+)
+
+type (
+	Response  {}
+	IDResponse {
+		ID uint64 `json:"id"`
+	}
+)
 
 // ══════════════════════════════════════════════
-// Common
+// Auth（无需 JWT）
 // ══════════════════════════════════════════════
-// model
+type (
+	SendVerificationCodeReq {
+		Target  string `json:"target"`
+		Channel int32  `json:"channel"` // 1: email
+		Purpose int32  `json:"purpose"` // 1: registration, 2: password reset
+	}
+	RegisterReq {
+		Target   string `json:"target"`
+		Channel  int32  `json:"channel"`
+		Code     string `json:"code"`
+		Password string `json:"password"`
+	}
+	LoginReq {
+		Target   string `json:"target"`
+		Channel  int32  `json:"channel"`
+		Password string `json:"password"`
+	}
+	RefreshTokenReq {
+		RefreshToken string `json:"refresh_token"`
+	}
+)
+
+type (
+	LoginResp {
+		Token        string   `json:"token"`
+		RefreshToken string   `json:"refresh_token"`
+		UserInfo     UserInfo `json:"user_info"`
+	}
+	RefreshTokenResp {
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+)
+
+@server (
+	prefix: /api/v1/auth
+	group:  auth
+)
+service life_tracker {
+	@doc "发送验证码"
+	@handler SendVerificationCode
+	post /send_code (SendVerificationCodeReq) returns (Response)
+
+	@doc "注册账号"
+	@handler Register
+	post /register (RegisterReq) returns (Response)
+
+	@doc "登录账号"
+	@handler Login
+	post /login (LoginReq) returns (LoginResp)
+
+	@doc "刷新令牌"
+	@handler RefreshToken
+	post /refresh (RefreshTokenReq) returns (RefreshTokenResp)
+}
+
+// ══════════════════════════════════════════════
+// User（需 JWT）
+// ══════════════════════════════════════════════
+type (
+	UpdateUserInfoReq {
+		Username string `json:"username,optional"`
+		Avatar   string `json:"avatar,optional"`
+	}
+	ChangePasswordReq {
+		Code        string `json:"code"`
+		NewPassword string `json:"new_password"`
+	}
+)
+
+@server (
+	prefix:     /api/v1/user
+	group:      user
+	middleware: JWTMiddleware
+)
+service life_tracker {
+	@doc "修改用户信息"
+	@handler UpdateUserInfo
+	post /update_info (UpdateUserInfoReq) returns (Response)
+
+	@doc "修改密码"
+	@handler ChangePassword
+	post /change_password (ChangePasswordReq) returns (Response)
+}
+
