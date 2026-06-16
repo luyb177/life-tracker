@@ -12,6 +12,17 @@ type ChangePasswordReq struct {
 	NewPassword string `json:"new_password"`
 }
 
+type CreateExpenseCategoryReq struct {
+	Name string `json:"name"`
+}
+
+type CreateExpenseLogReq struct {
+	CategoryID uint64  `json:"category_id"`
+	Amount     float64 `json:"amount"`
+	Note       string  `json:"note,optional"`
+	OccurredAt string  `json:"occurred_at"`
+}
+
 type CreateSummaryReq struct {
 	PeriodType        uint8  `json:"period_type"`
 	PeriodStart       string `json:"period_start"`
@@ -20,8 +31,36 @@ type CreateSummaryReq struct {
 	SuggestionContent string `json:"suggestion_content,optional"`
 }
 
+type DailyExpenseTotalReq struct {
+	Date string `form:"date"` // "2006-01-02"
+}
+
+type DailyExpenseTotalResp struct {
+	Date  string  `json:"date"`
+	Total float64 `json:"total"`
+}
+
+type DeleteExpenseLogReq struct {
+	ID uint64 `json:"id"`
+}
+
 type DeleteSummaryReq struct {
 	ID uint64 `json:"id"`
+}
+
+type ExpenseCategoryInfo struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+	Type uint8  `json:"type"` // 1=系统默认, 2=用户自定义
+}
+
+type ExpenseLogInfo struct {
+	ID         uint64              `json:"id"`
+	Category   ExpenseCategoryInfo `json:"category"`
+	Amount     float64             `json:"amount"`
+	Note       string              `json:"note"`
+	OccurredAt string              `json:"occurred_at"`
+	CreatedAt  string              `json:"created_at"`
 }
 
 type GenerateAISummaryReq struct {
@@ -40,6 +79,21 @@ type IPLocation struct {
 	City     string `json:"city"`
 	ISP      string `json:"isp"`
 	ISOCode  string `json:"iso_code"`
+}
+
+type ListExpenseCategoryResp struct {
+	Categories []ExpenseCategoryInfo `json:"categories"`
+}
+
+type ListExpenseLogReq struct {
+	PageSize  uint32 `form:"page_size"`
+	PageToken string `form:"page_token,optional"`
+}
+
+type ListExpenseLogResp struct {
+	List      []ExpenseLogInfo `json:"list"`
+	PageToken string           `json:"page_token"`
+	HasMore   bool             `json:"has_more"`
 }
 
 type ListSummaryReq struct {

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"github.com/luyb177/life-tracker/backend/internal/repo/expense"
 	"github.com/luyb177/life-tracker/backend/internal/repo/summary"
 	"github.com/luyb177/life-tracker/backend/internal/repo/token"
 	"github.com/luyb177/life-tracker/backend/internal/repo/user"
@@ -14,6 +15,7 @@ type Repositories struct {
 	Verify  verify.Repository
 	Token   *token.Repository
 	Summary summary.Repository
+	Expense expense.Repository
 	db      *gorm.DB
 }
 
@@ -23,6 +25,7 @@ func NewRepositories(redisClient *redis.Client, db *gorm.DB) *Repositories {
 		Verify:  verify.NewVerifyRepo(redisClient),
 		Token:   token.NewRepository(redisClient),
 		Summary: summary.NewRepository(db),
+		Expense: expense.NewRepository(db),
 		db:      db,
 	}
 }

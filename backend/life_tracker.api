@@ -204,3 +204,84 @@ service life_tracker {
 	post /delete (DeleteSummaryReq) returns (Response)
 }
 
+// ══════════════════════════════════════════════
+// Expense 支出（需 JWT）
+// ══════════════════════════════════════════════
+type (
+	ExpenseCategoryInfo {
+		ID   uint64 `json:"id"`
+		Name string `json:"name"`
+		Type uint8  `json:"type"` // 1=系统默认, 2=用户自定义
+	}
+	ExpenseLogInfo {
+		ID         uint64              `json:"id"`
+		Category   ExpenseCategoryInfo `json:"category"`
+		Amount     float64             `json:"amount"`
+		Note       string              `json:"note"`
+		OccurredAt string              `json:"occurred_at"`
+		CreatedAt  string              `json:"created_at"`
+	}
+	CreateExpenseCategoryReq {
+		Name string `json:"name"`
+	}
+	CreateExpenseLogReq {
+		CategoryID uint64  `json:"category_id"`
+		Amount     float64 `json:"amount"`
+		Note       string  `json:"note,optional"`
+		OccurredAt string  `json:"occurred_at"`
+	}
+	DeleteExpenseLogReq {
+		ID uint64 `json:"id"`
+	}
+	ListExpenseLogReq {
+		PageSize  uint32 `form:"page_size"`
+		PageToken string `form:"page_token,optional"`
+	}
+	ListExpenseLogResp {
+		List      []ExpenseLogInfo `json:"list"`
+		PageToken string           `json:"page_token"`
+		HasMore   bool             `json:"has_more"`
+	}
+	DailyExpenseTotalReq {
+		Date string `form:"date"` // "2006-01-02"
+	}
+	DailyExpenseTotalResp {
+		Date  string  `json:"date"`
+		Total float64 `json:"total"`
+	}
+	ListExpenseCategoryResp {
+		Categories []ExpenseCategoryInfo `json:"categories"`
+	}
+)
+
+@server (
+	prefix:     /api/v1/expense
+	group:      expense
+	middleware: JWTMiddleware,IPMiddleware
+)
+service life_tracker {
+	@doc "支出分类列表"
+	@handler ListExpenseCategory
+	get /categories (Response) returns (ListExpenseCategoryResp)
+
+	@doc "创建自定义分类"
+	@handler CreateExpenseCategory
+	post /category/create (CreateExpenseCategoryReq) returns (Response)
+
+	@doc "记录支出"
+	@handler CreateExpenseLog
+	post /create (CreateExpenseLogReq) returns (Response)
+
+	@doc "删除支出记录"
+	@handler DeleteExpenseLog
+	post /delete (DeleteExpenseLogReq) returns (Response)
+
+	@doc "支出记录列表"
+	@handler ListExpenseLog
+	get /list (ListExpenseLogReq) returns (ListExpenseLogResp)
+
+	@doc "每日支出汇总"
+	@handler DailyExpenseTotal
+	get /daily_total (DailyExpenseTotalReq) returns (DailyExpenseTotalResp)
+}
+

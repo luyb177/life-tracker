@@ -18,3 +18,17 @@ const (
 const (
 	SummaryPageTokenPrefix = "summary"
 )
+
+// 支出分类
+const (
+	ExpenseCategoryTypeSystem uint8 = 1 // 系统默认
+	ExpenseCategoryTypeUser   uint8 = 2 // 用户自定义
+)
+
+// 默认分类名称
+var DefaultExpenseCategories = []string{"早饭", "午饭", "晚饭", "杂项"}
+
+// 支出分页游标
+const (
+	ExpensePageTokenPrefix = "expense"
+)

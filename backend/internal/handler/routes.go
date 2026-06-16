@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	auth "github.com/luyb177/life-tracker/backend/internal/handler/auth"
+	expense "github.com/luyb177/life-tracker/backend/internal/handler/expense"
 	summary "github.com/luyb177/life-tracker/backend/internal/handler/summary"
 	user "github.com/luyb177/life-tracker/backend/internal/handler/user"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
@@ -46,6 +47,51 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.JWTMiddleware, serverCtx.IPMiddleware},
+			[]rest.Route{
+				{
+					// 支出分类列表
+					Method:  http.MethodGet,
+					Path:    "/categories",
+					Handler: expense.ListExpenseCategoryHandler(serverCtx),
+				},
+				{
+					// 创建自定义分类
+					Method:  http.MethodPost,
+					Path:    "/category/create",
+					Handler: expense.CreateExpenseCategoryHandler(serverCtx),
+				},
+				{
+					// 记录支出
+					Method:  http.MethodPost,
+					Path:    "/create",
+					Handler: expense.CreateExpenseLogHandler(serverCtx),
+				},
+				{
+					// 每日支出汇总
+					Method:  http.MethodGet,
+					Path:    "/daily_total",
+					Handler: expense.DailyExpenseTotalHandler(serverCtx),
+				},
+				{
+					// 删除支出记录
+					Method:  http.MethodPost,
+					Path:    "/delete",
+					Handler: expense.DeleteExpenseLogHandler(serverCtx),
+				},
+				{
+					// 支出记录列表
+					Method:  http.MethodGet,
+					Path:    "/list",
+					Handler: expense.ListExpenseLogHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/expense"),
 	)
 
 	server.AddRoutes(
