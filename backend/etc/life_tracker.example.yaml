@@ -1,6 +1,6 @@
 Name: life_tracker
 Host: 0.0.0.0
-Port: 8889
+Port: 8888
 
 Log:
   ServiceName: life-tracker
