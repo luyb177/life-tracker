@@ -22,6 +22,7 @@ type ServiceContext struct {
 	EmailSender   email.EmailSender
 	Repos         *repo.Repositories
 	JWTHandler    jwtx.Handler
+	IPMiddleware  rest.Middleware
 	JWTMiddleware rest.Middleware
 }
 
@@ -62,6 +63,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		EmailSender:   emailSender,
 		Repos:         repo.NewRepositories(rc.Client, mc.DB),
 		JWTHandler:    jwtHandler,
+		IPMiddleware:  middleware.NewIPMiddleware(c.IP2RegionConf).Handle,
 		JWTMiddleware: middleware.NewJWTMiddleware(jwtHandler).Handle,
 	}
 }

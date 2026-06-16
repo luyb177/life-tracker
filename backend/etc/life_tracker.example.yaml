@@ -23,6 +23,10 @@ EmailConf:
   SMTPHost: ""
   SMTPPort: 465
 
+IP2RegionConf:
+  V4: data/ip2region_v4.xdb
+  V6: data/ip2region_v6.xdb
+
 JWTConf:
   Secret: your-secret-here
   ExpireS: 900

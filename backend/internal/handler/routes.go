@@ -15,38 +15,41 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				// 登录账号
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: auth.LoginHandler(serverCtx),
-			},
-			{
-				// 刷新令牌
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: auth.RefreshTokenHandler(serverCtx),
-			},
-			{
-				// 注册账号
-				Method:  http.MethodPost,
-				Path:    "/register",
-				Handler: auth.RegisterHandler(serverCtx),
-			},
-			{
-				// 发送验证码
-				Method:  http.MethodPost,
-				Path:    "/send_code",
-				Handler: auth.SendVerificationCodeHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.IPMiddleware},
+			[]rest.Route{
+				{
+					// 登录账号
+					Method:  http.MethodPost,
+					Path:    "/login",
+					Handler: auth.LoginHandler(serverCtx),
+				},
+				{
+					// 刷新令牌
+					Method:  http.MethodPost,
+					Path:    "/refresh",
+					Handler: auth.RefreshTokenHandler(serverCtx),
+				},
+				{
+					// 注册账号
+					Method:  http.MethodPost,
+					Path:    "/register",
+					Handler: auth.RegisterHandler(serverCtx),
+				},
+				{
+					// 发送验证码
+					Method:  http.MethodPost,
+					Path:    "/send_code",
+					Handler: auth.SendVerificationCodeHandler(serverCtx),
+				},
+			}...,
+		),
 		rest.WithPrefix("/api/v1/auth"),
 	)
 
 	server.AddRoutes(
 		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.JWTMiddleware},
+			[]rest.Middleware{serverCtx.JWTMiddleware, serverCtx.IPMiddleware},
 			[]rest.Route{
 				{
 					// 修改密码

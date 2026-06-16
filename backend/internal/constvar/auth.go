@@ -6,7 +6,8 @@ import "time"
 type contextKey string
 
 const (
-	AuthUserKey contextKey = "auth_user"
+	AuthUserKey   contextKey = "auth_user"
+	IPLocationKey contextKey = "ip_location"
 )
 
 // 渠道

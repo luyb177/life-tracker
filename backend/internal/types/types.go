@@ -16,6 +16,15 @@ type IDResponse struct {
 	ID uint64 `json:"id"`
 }
 
+type IPLocation struct {
+	IP       string `json:"ip"`
+	Country  string `json:"country"`
+	Province string `json:"province"`
+	City     string `json:"city"`
+	ISP      string `json:"isp"`
+	ISOCode  string `json:"iso_code"`
+}
+
 type LoginReq struct {
 	Target   string `json:"target"`
 	Channel  int32  `json:"channel"`

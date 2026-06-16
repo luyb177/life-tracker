@@ -11,9 +11,15 @@ type Config struct {
 	MySQLConf struct {
 		DSN string
 	}
-	RedisConf RedisConf
-	EmailConf EmailConf
-	JWTConf   JWTConf
+	RedisConf     RedisConf
+	EmailConf     EmailConf
+	IP2RegionConf IP2RegionConf
+	JWTConf       JWTConf
+}
+
+type IP2RegionConf struct {
+	V4 string
+	V6 string
 }
 
 type EmailConf struct {
