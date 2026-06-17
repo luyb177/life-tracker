@@ -62,6 +62,7 @@ services:
         echo "0 8 * * 1 cd /app && cron summary -t 2" >> /var/spool/cron/crontabs/root
         echo "0 8 1 * * cd /app && cron summary -t 3" >> /var/spool/cron/crontabs/root
         echo "0 8 1 1 * cd /app && cron summary -t 4" >> /var/spool/cron/crontabs/root
+        echo "0 9 1 1 * cd /app && cron summary -t 5" >> /var/spool/cron/crontabs/root
         exec crond -f -l 2
     volumes:
       - ./etc/life_tracker.yaml:/app/etc/life_tracker.yaml:ro
