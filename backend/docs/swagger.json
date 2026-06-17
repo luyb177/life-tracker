@@ -264,6 +264,97 @@
         }
       }
     },
+    "/api/v1/expense/by_date": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "查询某天支出明细",
+        "operationId": "expenseExpenseByDate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "date",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "category",
+                      "amount",
+                      "note",
+                      "occurred_at",
+                      "created_at"
+                    ],
+                    "properties": {
+                      "amount": {
+                        "type": "number"
+                      },
+                      "category": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "type"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "description": "1=系统默认, 2=用户自定义",
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "location": {
+                        "type": "string"
+                      },
+                      "note": {
+                        "type": "string"
+                      },
+                      "occurred_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "total": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/expense/categories": {
       "get": {
         "produces": [
@@ -617,6 +708,9 @@
                       "id": {
                         "type": "integer"
                       },
+                      "location": {
+                        "type": "string"
+                      },
                       "note": {
                         "type": "string"
                       },
@@ -630,6 +724,287 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/stats/category": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "分类支出占比",
+        "operationId": "expenseExpenseStatsCategory",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "category_id",
+                      "category_name",
+                      "total"
+                    ],
+                    "properties": {
+                      "category_id": {
+                        "type": "integer"
+                      },
+                      "category_name": {
+                        "type": "string"
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/stats/monthly": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "每月支出趋势",
+        "operationId": "expenseExpenseMonthlyTrend",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "month",
+                      "total"
+                    ],
+                    "properties": {
+                      "month": {
+                        "type": "string"
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/stats/range": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "区间支出总额",
+        "operationId": "expenseExpenseStatsRange",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/stats/trend": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "每日支出趋势",
+        "operationId": "expenseExpenseStatsTrend",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "date",
+                      "total"
+                    ],
+                    "properties": {
+                      "date": {
+                        "type": "string"
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/update": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "更新支出记录",
+        "operationId": "expenseUpdateExpenseLog",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "amount": {
+                  "type": "number"
+                },
+                "category_id": {
+                  "type": "integer"
+                },
+                "id": {
+                  "type": "integer"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "occurred_at": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
             }
           }
         }
@@ -679,6 +1054,12 @@
                 },
                 "summary_content": {
                   "type": "string"
+                },
+                "tags": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
                 }
               }
             }
@@ -692,6 +1073,98 @@
               "properties": {
                 "id": {
                   "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/day": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "summary"
+        ],
+        "summary": "查询某天日报（用户+AI）",
+        "operationId": "summaryDaySummary",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "date",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "period_type",
+                      "period_start",
+                      "period_end",
+                      "source",
+                      "summary_content",
+                      "created_at",
+                      "updated_at"
+                    ],
+                    "properties": {
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "location": {
+                        "type": "string"
+                      },
+                      "period_end": {
+                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
+                        "type": "string"
+                      },
+                      "period_start": {
+                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
+                        "type": "string"
+                      },
+                      "period_type": {
+                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                        "type": "integer"
+                      },
+                      "source": {
+                        "description": "1=AI, 2=用户",
+                        "type": "integer"
+                      },
+                      "suggestion_content": {
+                        "type": "string"
+                      },
+                      "summary_content": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -772,11 +1245,11 @@
               ],
               "properties": {
                 "period_start": {
-                  "description": "指定周期的起始日期",
+                  "description": "周期起始日期，统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_type": {
-                  "description": "1=日报, 2=周报, 3=月报, 4=年报",
+                  "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
                   "type": "integer"
                 }
               }
@@ -795,15 +1268,19 @@
                 "id": {
                   "type": "integer"
                 },
+                "location": {
+                  "type": "string"
+                },
                 "period_end": {
+                  "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_start": {
-                  "description": "\"2006-01-02\" / \"2006-W01\" / \"2006-01\" / \"2006\"",
+                  "description": "周期起始日期，统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_type": {
-                  "description": "1=日报, 2=周报, 3=月报, 4=年报",
+                  "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
                   "type": "integer"
                 },
                 "source": {
@@ -814,6 +1291,12 @@
                   "type": "string"
                 },
                 "summary_content": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "string"
+                },
+                "title": {
                   "type": "string"
                 },
                 "updated_at": {
@@ -888,15 +1371,19 @@
                       "id": {
                         "type": "integer"
                       },
+                      "location": {
+                        "type": "string"
+                      },
                       "period_end": {
+                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_start": {
-                        "description": "\"2006-01-02\" / \"2006-W01\" / \"2006-01\" / \"2006\"",
+                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_type": {
-                        "description": "1=日报, 2=周报, 3=月报, 4=年报",
+                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
                         "type": "integer"
                       },
                       "source": {
@@ -909,6 +1396,12 @@
                       "summary_content": {
                         "type": "string"
                       },
+                      "tags": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
                       "updated_at": {
                         "type": "string"
                       }
@@ -917,6 +1410,242 @@
                 },
                 "page_token": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/range": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "summary"
+        ],
+        "summary": "按时间范围查询总结",
+        "operationId": "summaryRangeSummary",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "period_type",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "period_type",
+                      "period_start",
+                      "period_end",
+                      "source",
+                      "summary_content",
+                      "created_at",
+                      "updated_at"
+                    ],
+                    "properties": {
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "location": {
+                        "type": "string"
+                      },
+                      "period_end": {
+                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
+                        "type": "string"
+                      },
+                      "period_start": {
+                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
+                        "type": "string"
+                      },
+                      "period_type": {
+                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                        "type": "integer"
+                      },
+                      "source": {
+                        "description": "1=AI, 2=用户",
+                        "type": "integer"
+                      },
+                      "suggestion_content": {
+                        "type": "string"
+                      },
+                      "summary_content": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/stats/tag_trend": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "summary"
+        ],
+        "summary": "标签按月趋势",
+        "operationId": "summaryTagTrend",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "months": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "month",
+                      "tags"
+                    ],
+                    "properties": {
+                      "month": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "tag",
+                            "count"
+                          ],
+                          "properties": {
+                            "count": {
+                              "type": "integer"
+                            },
+                            "tag": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/summary/stats/tags": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "summary"
+        ],
+        "summary": "标签频次统计",
+        "operationId": "summaryTagStats",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "start",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "end",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "tag",
+                      "count"
+                    ],
+                    "properties": {
+                      "count": {
+                        "type": "integer"
+                      },
+                      "tag": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -958,6 +1687,12 @@
                   "type": "string"
                 },
                 "summary_content": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "string"
+                },
+                "title": {
                   "type": "string"
                 }
               }
@@ -1067,7 +1802,7 @@
       }
     }
   },
-  "x-date": "2026-06-17 16:47:06",
+  "x-date": "2026-06-17 21:31:52",
   "x-description": "This is a goctl generated swagger file.",
   "x-github": "https://github.com/zeromicro/go-zero",
   "x-go-zero-doc": "https://go-zero.dev/",

@@ -10,6 +10,7 @@ import (
 type Repository interface {
 	SetCode(ctx context.Context, meta *Meta, code string, expire time.Duration) error
 	VerifyCode(ctx context.Context, meta *Meta, code string) (bool, error)
+	CodeTTL(ctx context.Context, meta *Meta) (time.Duration, error)
 }
 
 type repo struct {

@@ -2,6 +2,7 @@ package summary
 
 import (
 	"context"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -30,9 +31,17 @@ func run(_ *cobra.Command, _ []string) error {
 	label := labelCN(periodType)
 	logx.Infof("starting AI %s summary...", label)
 
-	if err := cronLogic.Run(context.Background(), internal.SvcCtx, periodType, 1); err != nil {
-		logx.Errorf("AI %s summary failed: %v", label, err)
+	userIDs, err := internal.SvcCtx.Repos.User.ListIDs(context.Background())
+	if err != nil {
+		logx.Errorf("list users for AI %s summary failed: %v", label, err)
 		return err
+	}
+
+	for _, userID := range userIDs {
+		if err := cronLogic.Run(context.Background(), internal.SvcCtx, periodType, userID, time.Time{}); err != nil {
+			logx.Errorf("AI %s summary failed for user %d: %v", label, userID, err)
+			return err
+		}
 	}
 
 	logx.Infof("AI %s summary completed", label)
@@ -49,6 +58,8 @@ func labelCN(t uint8) string {
 		return "月报"
 	case constvar.SummaryPeriodTypeYear:
 		return "年报"
+	case constvar.SummaryPeriodTypeLife:
+		return "人生总结"
 	default:
 		return "总结"
 	}

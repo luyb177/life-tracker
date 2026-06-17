@@ -82,6 +82,8 @@ func (l *ListSummaryLogic) ListSummary(req *types.ListSummaryReq) (*types.ListSu
 			Source:            s.Source,
 			SummaryContent:    s.SummaryContent,
 			SuggestionContent: s.SuggestionContent,
+			Title:             s.Title,
+			Tags:              s.Tags,
 			Location:          s.Location,
 			CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
 			UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),

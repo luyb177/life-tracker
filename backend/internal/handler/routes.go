@@ -54,6 +54,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.JWTMiddleware, serverCtx.IPMiddleware},
 			[]rest.Route{
 				{
+					// 查询某天支出明细
+					Method:  http.MethodGet,
+					Path:    "/by_date",
+					Handler: expense.ExpenseByDateHandler(serverCtx),
+				},
+				{
 					// 支出分类列表
 					Method:  http.MethodGet,
 					Path:    "/categories",
@@ -95,6 +101,36 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/list",
 					Handler: expense.ListExpenseLogHandler(serverCtx),
 				},
+				{
+					// 分类支出占比
+					Method:  http.MethodGet,
+					Path:    "/stats/category",
+					Handler: expense.ExpenseStatsCategoryHandler(serverCtx),
+				},
+				{
+					// 每月支出趋势
+					Method:  http.MethodGet,
+					Path:    "/stats/monthly",
+					Handler: expense.ExpenseMonthlyTrendHandler(serverCtx),
+				},
+				{
+					// 区间支出总额
+					Method:  http.MethodGet,
+					Path:    "/stats/range",
+					Handler: expense.ExpenseStatsRangeHandler(serverCtx),
+				},
+				{
+					// 每日支出趋势
+					Method:  http.MethodGet,
+					Path:    "/stats/trend",
+					Handler: expense.ExpenseStatsTrendHandler(serverCtx),
+				},
+				{
+					// 更新支出记录
+					Method:  http.MethodPost,
+					Path:    "/update",
+					Handler: expense.UpdateExpenseLogHandler(serverCtx),
+				},
 			}...,
 		),
 		rest.WithPrefix("/api/v1/expense"),
@@ -109,6 +145,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPost,
 					Path:    "/create",
 					Handler: summary.CreateSummaryHandler(serverCtx),
+				},
+				{
+					// 查询某天日报（用户+AI）
+					Method:  http.MethodGet,
+					Path:    "/day",
+					Handler: summary.DaySummaryHandler(serverCtx),
 				},
 				{
 					// 删除总结
@@ -127,6 +169,24 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodGet,
 					Path:    "/list",
 					Handler: summary.ListSummaryHandler(serverCtx),
+				},
+				{
+					// 按时间范围查询总结
+					Method:  http.MethodGet,
+					Path:    "/range",
+					Handler: summary.RangeSummaryHandler(serverCtx),
+				},
+				{
+					// 标签按月趋势
+					Method:  http.MethodGet,
+					Path:    "/stats/tag_trend",
+					Handler: summary.TagTrendHandler(serverCtx),
+				},
+				{
+					// 标签频次统计
+					Method:  http.MethodGet,
+					Path:    "/stats/tags",
+					Handler: summary.TagStatsHandler(serverCtx),
 				},
 				{
 					// 更新总结

@@ -51,6 +51,16 @@ func (l *DeleteExpenseCategoryLogic) DeleteExpenseCategory(req *types.DeleteExpe
 		return nil, errorx.WrapBadRequest("系统默认分类不可删除", nil)
 	}
 
+	// 检查是否存在关联的支出记录
+	count, err := l.svcCtx.Repos.Expense.CountLogsByCategory(l.ctx, req.ID)
+	if err != nil {
+		l.Errorf("count logs by category failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询关联记录失败", err)
+	}
+	if count > 0 {
+		return nil, errorx.WrapBadRequest("该分类下存在支出记录，无法删除", nil)
+	}
+
 	if err := l.svcCtx.Repos.Expense.DeleteCategory(l.ctx, req.ID); err != nil {
 		l.Errorf("delete category failed: %v", err)
 		return nil, errorx.WrapDBDelete("删除分类失败", err)

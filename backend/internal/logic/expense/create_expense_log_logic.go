@@ -45,6 +45,18 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 		return nil, errorx.WrapBadRequest("请选择分类", nil)
 	}
 
+	category, err := l.svcCtx.Repos.Expense.FindCategoryByID(l.ctx, req.CategoryID)
+	if err != nil {
+		l.Errorf("find expense category failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询分类失败", err)
+	}
+	if category == nil {
+		return nil, errorx.ErrNotFound
+	}
+	if category.UserID != authUser.UserID {
+		return nil, errorx.ErrForbidden
+	}
+
 	occurredAt, err := time.ParseInLocation(time.DateTime, req.OccurredAt, constvar.TimeLocation)
 	if err != nil {
 		return nil, errorx.WrapBadRequest("时间格式无效", err)

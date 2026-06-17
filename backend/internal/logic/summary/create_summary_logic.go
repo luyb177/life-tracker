@@ -5,6 +5,7 @@ package summary
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
@@ -45,14 +46,35 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		return nil, errorx.WrapBadRequest("无效的周期类型", nil)
 	}
 
+	startAt, endAt, err := normalizePeriodRange(req.PeriodType, req.PeriodStart, req.PeriodEnd)
+	if err != nil {
+		return nil, errorx.WrapBadRequest(fmt.Sprintf("周期参数无效：%v；period_start / period_end 期望格式: %s", err, periodStartHint(req.PeriodType)), err)
+	}
+	normalizedStart := startAt.Format("2006-01-02")
+	normalizedEnd := endAt.Format("2006-01-02")
+
+	// 非日报用户记录：同周期仅允许一条
+	if req.PeriodType != constvar.SummaryPeriodTypeDay {
+		exists, err := l.svcCtx.Repos.Summary.ExistsByPeriodAndSource(l.ctx, authUser.UserID, req.PeriodType, normalizedStart, constvar.SummarySourceUser)
+		if err != nil {
+			l.Errorf("check summary exists failed: %v", err)
+			return nil, errorx.WrapDBQuery("查询已有记录失败", err)
+		}
+		if exists {
+			return nil, errorx.WrapBadRequest(fmt.Sprintf("该%s已存在，不允许重复创建", periodTypeLabel(req.PeriodType)), nil)
+		}
+	}
+
 	s := &summary.Summary{
 		UserID:            authUser.UserID,
 		PeriodType:        req.PeriodType,
-		PeriodStart:       req.PeriodStart,
-		PeriodEnd:         req.PeriodEnd,
+		PeriodStart:       normalizedStart,
+		PeriodEnd:         normalizedEnd,
 		Source:            constvar.SummarySourceUser,
 		SummaryContent:    req.SummaryContent,
 		SuggestionContent: req.SuggestionContent,
+		Title:             strings.TrimSpace(req.Title),
+		Tags:              strings.TrimSpace(req.Tags),
 		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
 	}
 

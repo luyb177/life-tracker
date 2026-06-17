@@ -17,6 +17,7 @@ type Repository interface {
 
 	// Log
 	CreateLog(ctx context.Context, l *Log, tx ...*gorm.DB) error
+	UpdateLog(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 	DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	FindLogByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Log, error)
 	ListLogsByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Log, error)
@@ -28,6 +29,12 @@ type Repository interface {
 	SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error)
 	// ListLogsByDateRange 查询指定日期范围内的支出记录
 	ListLogsByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]*Log, error)
+	// CountLogsByCategory 统计某分类下的支出记录数
+	CountLogsByCategory(ctx context.Context, categoryID uint64, tx ...*gorm.DB) (int64, error)
+	// SumByDay 按天聚合支出
+	SumByDay(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]DayTotal, error)
+	// SumByMonth 按月聚合支出
+	SumByMonth(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]MonthTotal, error)
 }
 
 // CategoryTotal 分类汇总
@@ -35,6 +42,18 @@ type CategoryTotal struct {
 	CategoryID   uint64  `json:"category_id"`
 	CategoryName string  `json:"category_name"`
 	Total        float64 `json:"total"`
+}
+
+// DayTotal 按天汇总
+type DayTotal struct {
+	Date  string  `json:"date"`
+	Total float64 `json:"total"`
+}
+
+// MonthTotal 按月汇总
+type MonthTotal struct {
+	Month string  `json:"month"` // "2026-01"
+	Total float64 `json:"total"`
 }
 
 type repo struct {
@@ -81,6 +100,10 @@ func (r *repo) DeleteCategory(ctx context.Context, id uint64, tx ...*gorm.DB) er
 
 func (r *repo) CreateLog(ctx context.Context, l *Log, tx ...*gorm.DB) error {
 	return r.getDB(ctx, tx...).Create(l).Error
+}
+
+func (r *repo) UpdateLog(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error {
+	return r.getDB(ctx, tx...).Model(&Log{}).Where("id = ?", id).Updates(updates).Error
 }
 
 func (r *repo) DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error {
@@ -156,6 +179,34 @@ func (r *repo) SumByDateRangeGrouped(ctx context.Context, userID uint64, start, 
 		Where("expense_logs.user_id = ? AND expense_logs.occurred_at >= ? AND expense_logs.occurred_at < ?", userID, start, end).
 		Group("expense_logs.category_id, expense_categories.name").
 		Order("total DESC").
+		Scan(&results).Error
+	return results, err
+}
+
+func (r *repo) SumByMonth(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]MonthTotal, error) {
+	var results []MonthTotal
+	err := r.getDB(ctx, tx...).Model(&Log{}).
+		Select("DATE_FORMAT(occurred_at, '%Y-%m') as month, COALESCE(SUM(amount), 0) as total").
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Group("DATE_FORMAT(occurred_at, '%Y-%m')").
+		Order("month ASC").
+		Scan(&results).Error
+	return results, err
+}
+
+func (r *repo) CountLogsByCategory(ctx context.Context, categoryID uint64, tx ...*gorm.DB) (int64, error) {
+	var count int64
+	err := r.getDB(ctx, tx...).Model(&Log{}).Where("category_id = ?", categoryID).Count(&count).Error
+	return count, err
+}
+
+func (r *repo) SumByDay(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]DayTotal, error) {
+	var results []DayTotal
+	err := r.getDB(ctx, tx...).Model(&Log{}).
+		Select("DATE(occurred_at) as date, COALESCE(SUM(amount), 0) as total").
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Group("DATE(occurred_at)").
+		Order("date ASC").
 		Scan(&results).Error
 	return results, err
 }

@@ -31,12 +31,15 @@ type (
 	}
 	SummaryInfo {
 		ID                uint64 `json:"id"`
-		PeriodType        uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
-		PeriodStart       string `json:"period_start"` // "2006-01-02" / "2006-W01" / "2006-01" / "2006"
-		PeriodEnd         string `json:"period_end"`
+		PeriodType        uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
+		PeriodStart       string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
+		PeriodEnd         string `json:"period_end"` // 周期结束日期（开区间），统一使用 YYYY-MM-DD
 		Source            uint8  `json:"source"` // 1=AI, 2=用户
 		SummaryContent    string `json:"summary_content"`
 		SuggestionContent string `json:"suggestion_content,optional"`
+		Title             string `json:"title,optional"`
+		Tags              string `json:"tags,optional"`
+		Location          string `json:"location,optional"`
 		CreatedAt         string `json:"created_at"`
 		UpdatedAt         string `json:"updated_at"`
 	}
@@ -154,11 +157,15 @@ type (
 		PeriodEnd         string `json:"period_end"`
 		SummaryContent    string `json:"summary_content"`
 		SuggestionContent string `json:"suggestion_content,optional"`
+		Title             string `json:"title,optional"`
+		Tags              string `json:"tags,optional"`
 	}
 	UpdateSummaryReq {
 		ID                uint64 `json:"id"`
 		SummaryContent    string `json:"summary_content,optional"`
 		SuggestionContent string `json:"suggestion_content,optional"`
+		Title             string `json:"title,optional"`
+		Tags              string `json:"tags,optional"`
 	}
 	ListSummaryReq {
 		PeriodType uint8  `form:"period_type,optional"`
@@ -171,11 +178,43 @@ type (
 		HasMore   bool          `json:"has_more"`
 	}
 	GenerateAISummaryReq {
-		PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
-		PeriodStart string `json:"period_start"` // 指定周期的起始日期
+		PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
+		PeriodStart string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
 	}
 	DeleteSummaryReq {
 		ID uint64 `json:"id"`
+	}
+	SummaryDayReq {
+		Date string `form:"date"` // "2006-01-02"
+	}
+	SummaryDayResp {
+		List []SummaryInfo `json:"list"`
+	}
+	SummaryRangeReq {
+		PeriodType uint8  `form:"period_type,optional"`
+		Start      string `form:"start"`
+		End        string `form:"end"`
+	}
+	SummaryRangeResp {
+		List []SummaryInfo `json:"list"`
+	}
+	SummaryTagStatsReq {
+		Start string `form:"start"` // "2006-01-02"
+		End   string `form:"end"` // "2006-01-02"
+	}
+	SummaryTagStatsResp {
+		Tags []TagCount `json:"tags"`
+	}
+	TagCount {
+		Tag   string `json:"tag"`
+		Count int64  `json:"count"`
+	}
+	SummaryTagTrendResp {
+		Months []MonthTagStats `json:"months"`
+	}
+	MonthTagStats {
+		Month string     `json:"month"`
+		Tags  []TagCount `json:"tags"`
 	}
 )
 
@@ -205,6 +244,22 @@ service life_tracker {
 	@doc "删除总结"
 	@handler DeleteSummary
 	post /delete (DeleteSummaryReq) returns (Response)
+
+	@doc "查询某天日报（用户+AI）"
+	@handler DaySummary
+	get /day (SummaryDayReq) returns (SummaryDayResp)
+
+	@doc "按时间范围查询总结"
+	@handler RangeSummary
+	get /range (SummaryRangeReq) returns (SummaryRangeResp)
+
+	@doc "标签频次统计"
+	@handler TagStats
+	get /stats/tags (SummaryTagStatsReq) returns (SummaryTagStatsResp)
+
+	@doc "标签按月趋势"
+	@handler TagTrend
+	get /stats/tag_trend (SummaryTagStatsReq) returns (SummaryTagTrendResp)
 }
 
 // ══════════════════════════════════════════════
@@ -221,6 +276,7 @@ type (
 		Category   ExpenseCategoryInfo `json:"category"`
 		Amount     float64             `json:"amount"`
 		Note       string              `json:"note"`
+		Location   string              `json:"location,optional"`
 		OccurredAt string              `json:"occurred_at"`
 		CreatedAt  string              `json:"created_at"`
 	}
@@ -238,6 +294,20 @@ type (
 	}
 	DeleteExpenseLogReq {
 		ID uint64 `json:"id"`
+	}
+	UpdateExpenseLogReq {
+		ID         uint64  `json:"id"`
+		CategoryID uint64  `json:"category_id,optional"`
+		Amount     float64 `json:"amount,optional"`
+		Note       string  `json:"note,optional"`
+		OccurredAt string  `json:"occurred_at,optional"`
+	}
+	ExpenseByDateReq {
+		Date string `form:"date"` // "2006-01-02"
+	}
+	ExpenseByDateResp {
+		List  []ExpenseLogInfo `json:"list"`
+		Total float64          `json:"total"`
 	}
 	ListExpenseLogReq {
 		PageSize  uint32 `form:"page_size"`
@@ -257,6 +327,35 @@ type (
 	}
 	ListExpenseCategoryResp {
 		Categories []ExpenseCategoryInfo `json:"categories"`
+	}
+	ExpenseStatsReq {
+		Start string `form:"start"` // "2006-01-02"
+		End   string `form:"end"` // "2006-01-02"
+	}
+	ExpenseStatsRangeResp {
+		Total float64 `json:"total"`
+	}
+	ExpenseStatsCategoryResp {
+		Categories []ExpenseCategoryStat `json:"categories"`
+	}
+	ExpenseCategoryStat {
+		CategoryID   uint64  `json:"category_id"`
+		CategoryName string  `json:"category_name"`
+		Total        float64 `json:"total"`
+	}
+	ExpenseStatsTrendResp {
+		Points []ExpenseTrendPoint `json:"points"`
+	}
+	ExpenseTrendPoint {
+		Date  string  `json:"date"`
+		Total float64 `json:"total"`
+	}
+	ExpenseMonthlyTrendResp {
+		Points []MonthTotal `json:"points"`
+	}
+	MonthTotal {
+		Month string  `json:"month"`
+		Total float64 `json:"total"`
 	}
 )
 
@@ -287,6 +386,14 @@ service life_tracker {
 	@handler DeleteExpenseLog
 	post /delete (DeleteExpenseLogReq) returns (Response)
 
+	@doc "更新支出记录"
+	@handler UpdateExpenseLog
+	post /update (UpdateExpenseLogReq) returns (Response)
+
+	@doc "查询某天支出明细"
+	@handler ExpenseByDate
+	get /by_date (ExpenseByDateReq) returns (ExpenseByDateResp)
+
 	@doc "支出记录列表"
 	@handler ListExpenseLog
 	get /list (ListExpenseLogReq) returns (ListExpenseLogResp)
@@ -294,5 +401,20 @@ service life_tracker {
 	@doc "每日支出汇总"
 	@handler DailyExpenseTotal
 	get /daily_total (DailyExpenseTotalReq) returns (DailyExpenseTotalResp)
-}
 
+	@doc "区间支出总额"
+	@handler ExpenseStatsRange
+	get /stats/range (ExpenseStatsReq) returns (ExpenseStatsRangeResp)
+
+	@doc "分类支出占比"
+	@handler ExpenseStatsCategory
+	get /stats/category (ExpenseStatsReq) returns (ExpenseStatsCategoryResp)
+
+	@doc "每日支出趋势"
+	@handler ExpenseStatsTrend
+	get /stats/trend (ExpenseStatsReq) returns (ExpenseStatsTrendResp)
+
+	@doc "每月支出趋势"
+	@handler ExpenseMonthlyTrend
+	get /stats/monthly (ExpenseStatsReq) returns (ExpenseMonthlyTrendResp)
+}

@@ -5,6 +5,7 @@ package summary
 
 import (
 	"context"
+	"strings"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/middleware"
@@ -52,6 +53,12 @@ func (l *UpdateSummaryLogic) UpdateSummary(req *types.UpdateSummaryReq) (*types.
 	}
 	if req.SuggestionContent != "" {
 		updates["suggestion_content"] = req.SuggestionContent
+	}
+	if req.Title != "" {
+		updates["title"] = strings.TrimSpace(req.Title)
+	}
+	if req.Tags != "" {
+		updates["tags"] = strings.TrimSpace(req.Tags)
 	}
 	if len(updates) == 0 {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)

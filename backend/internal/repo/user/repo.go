@@ -12,6 +12,7 @@ type Repository interface {
 	Create(ctx context.Context, user *User, tx ...*gorm.DB) error
 	FindByEmail(ctx context.Context, email string, tx ...*gorm.DB) (*User, error)
 	FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*User, error)
+	ListIDs(ctx context.Context, tx ...*gorm.DB) ([]uint64, error)
 	Update(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 }
 
@@ -52,6 +53,16 @@ func (r *repo) FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*User, 
 		return nil, nil
 	}
 	return &u, err
+}
+
+func (r *repo) ListIDs(ctx context.Context, tx ...*gorm.DB) ([]uint64, error) {
+	db := r.getDB(ctx, tx...)
+
+	var ids []uint64
+	if err := db.Model(&User{}).Order("id ASC").Pluck("id", &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
 }
 
 func (r *repo) Update(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error {

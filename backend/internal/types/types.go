@@ -29,6 +29,8 @@ type CreateSummaryReq struct {
 	PeriodEnd         string `json:"period_end"`
 	SummaryContent    string `json:"summary_content"`
 	SuggestionContent string `json:"suggestion_content,optional"`
+	Title             string `json:"title,optional"`
+	Tags              string `json:"tags,optional"`
 }
 
 type DailyExpenseTotalReq struct {
@@ -52,10 +54,25 @@ type DeleteSummaryReq struct {
 	ID uint64 `json:"id"`
 }
 
+type ExpenseByDateReq struct {
+	Date string `form:"date"` // "2006-01-02"
+}
+
+type ExpenseByDateResp struct {
+	List  []ExpenseLogInfo `json:"list"`
+	Total float64          `json:"total"`
+}
+
 type ExpenseCategoryInfo struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
 	Type uint8  `json:"type"` // 1=系统默认, 2=用户自定义
+}
+
+type ExpenseCategoryStat struct {
+	CategoryID   uint64  `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Total        float64 `json:"total"`
 }
 
 type ExpenseLogInfo struct {
@@ -68,9 +85,35 @@ type ExpenseLogInfo struct {
 	CreatedAt  string              `json:"created_at"`
 }
 
+type ExpenseMonthlyTrendResp struct {
+	Points []MonthTotal `json:"points"`
+}
+
+type ExpenseStatsCategoryResp struct {
+	Categories []ExpenseCategoryStat `json:"categories"`
+}
+
+type ExpenseStatsRangeResp struct {
+	Total float64 `json:"total"`
+}
+
+type ExpenseStatsReq struct {
+	Start string `form:"start"` // "2006-01-02"
+	End   string `form:"end"`   // "2006-01-02"
+}
+
+type ExpenseStatsTrendResp struct {
+	Points []ExpenseTrendPoint `json:"points"`
+}
+
+type ExpenseTrendPoint struct {
+	Date  string  `json:"date"`
+	Total float64 `json:"total"`
+}
+
 type GenerateAISummaryReq struct {
-	PeriodType  uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报
-	PeriodStart string `json:"period_start"` // 指定周期的起始日期
+	PeriodType  uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
+	PeriodStart string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
 }
 
 type IDResponse struct {
@@ -125,6 +168,16 @@ type LoginResp struct {
 	UserInfo     UserInfo `json:"user_info"`
 }
 
+type MonthTagStats struct {
+	Month string     `json:"month"`
+	Tags  []TagCount `json:"tags"`
+}
+
+type MonthTotal struct {
+	Month string  `json:"month"`
+	Total float64 `json:"total"`
+}
+
 type PageToken struct {
 	ID        uint64 `json:"id"`
 	CreatedAt string `json:"created_at"`
@@ -155,23 +208,71 @@ type SendVerificationCodeReq struct {
 	Purpose int32  `json:"purpose"` // 1: registration, 2: password reset
 }
 
+type SummaryDayReq struct {
+	Date string `form:"date"` // "2006-01-02"
+}
+
+type SummaryDayResp struct {
+	List []SummaryInfo `json:"list"`
+}
+
 type SummaryInfo struct {
 	ID                uint64 `json:"id"`
-	PeriodType        uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报
-	PeriodStart       string `json:"period_start"` // "2006-01-02" / "2006-W01" / "2006-01" / "2006"
-	PeriodEnd         string `json:"period_end"`
-	Source            uint8  `json:"source"` // 1=AI, 2=用户
+	PeriodType        uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
+	PeriodStart       string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
+	PeriodEnd         string `json:"period_end"`   // 周期结束日期（开区间），统一使用 YYYY-MM-DD
+	Source            uint8  `json:"source"`       // 1=AI, 2=用户
 	SummaryContent    string `json:"summary_content"`
 	SuggestionContent string `json:"suggestion_content,optional"`
+	Title             string `json:"title,optional"`
+	Tags              string `json:"tags,optional"`
 	Location          string `json:"location,optional"`
 	CreatedAt         string `json:"created_at"`
 	UpdatedAt         string `json:"updated_at"`
+}
+
+type SummaryRangeReq struct {
+	PeriodType uint8  `form:"period_type,optional"`
+	Start      string `form:"start"`
+	End        string `form:"end"`
+}
+
+type SummaryRangeResp struct {
+	List []SummaryInfo `json:"list"`
+}
+
+type SummaryTagStatsReq struct {
+	Start string `form:"start"` // "2006-01-02"
+	End   string `form:"end"`   // "2006-01-02"
+}
+
+type SummaryTagStatsResp struct {
+	Tags []TagCount `json:"tags"`
+}
+
+type SummaryTagTrendResp struct {
+	Months []MonthTagStats `json:"months"`
+}
+
+type TagCount struct {
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
+}
+
+type UpdateExpenseLogReq struct {
+	ID         uint64  `json:"id"`
+	CategoryID uint64  `json:"category_id,optional"`
+	Amount     float64 `json:"amount,optional"`
+	Note       string  `json:"note,optional"`
+	OccurredAt string  `json:"occurred_at,optional"`
 }
 
 type UpdateSummaryReq struct {
 	ID                uint64 `json:"id"`
 	SummaryContent    string `json:"summary_content,optional"`
 	SuggestionContent string `json:"suggestion_content,optional"`
+	Title             string `json:"title,optional"`
+	Tags              string `json:"tags,optional"`
 }
 
 type UpdateUserInfoReq struct {

@@ -53,6 +53,12 @@ func (r *repo) VerifyCode(ctx context.Context, meta *Meta, code string) (bool, e
 	return matched == 1, nil
 }
 
+// CodeTTL 查询验证码剩余有效期，用于限频；不存在时返回 0
+func (r *repo) CodeTTL(ctx context.Context, meta *Meta) (time.Duration, error) {
+	key := verifyCodeKey(meta)
+	return r.client.TTL(ctx, key).Result()
+}
+
 func verifyCodeKey(meta *Meta) string {
 	sum := sha256.Sum256([]byte(meta.Target))
 	targetHash := hex.EncodeToString(sum[:])

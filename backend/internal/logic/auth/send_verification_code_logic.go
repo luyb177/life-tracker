@@ -6,6 +6,7 @@ package auth
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/constvar"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+const verifyCodeCooldown = 60 * time.Second
 
 type SendVerificationCodeLogic struct {
 	logx.Logger
@@ -57,20 +60,24 @@ func (l *SendVerificationCodeLogic) sendByEmail(target string, purpose int32) (*
 		return nil, errorx.WrapBadRequest("无效的邮箱地址", nil)
 	}
 
+	// 限频：60 秒内同目标同用途不允许重复发送
+	meta := &verify.Meta{Target: target, Channel: constvar.ChannelEmail, Purpose: purpose}
+	if ttl, err := l.svcCtx.Repos.Verify.CodeTTL(l.ctx, meta); err == nil && ttl > 0 {
+		remaining := constvar.VerifyCodeExpire - ttl
+		if remaining < verifyCodeCooldown {
+			return nil, errorx.WrapBadRequest("验证码发送过于频繁，请稍后再试", nil)
+		}
+	}
+
 	emailCode := code.EmailCode()
 
-	meta := &verify.Meta{
-		Target:  target,
-		Channel: constvar.ChannelEmail,
-		Purpose: purpose,
-	}
 	if err := l.svcCtx.Repos.Verify.SetCode(l.ctx, meta, emailCode, constvar.VerifyCodeExpire); err != nil {
 		l.Errorf("set verify code failed: %v", err)
 		return nil, errorx.WrapInternal("验证码存储失败", err)
 	}
 
 	go func() {
-		if err := l.svcCtx.EmailSender.SendVerifyCode(l.ctx, target, emailCode, int(constvar.VerifyCodeExpire.Minutes())); err != nil {
+		if err := l.svcCtx.EmailSender.SendVerifyCode(context.Background(), target, emailCode, int(constvar.VerifyCodeExpire.Minutes())); err != nil {
 			l.Errorf("send verify code email failed: %v", err)
 		}
 	}()
