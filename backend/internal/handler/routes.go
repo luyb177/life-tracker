@@ -66,6 +66,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: expense.CreateExpenseCategoryHandler(serverCtx),
 				},
 				{
+					// 删除自定义分类
+					Method:  http.MethodPost,
+					Path:    "/category/delete",
+					Handler: expense.DeleteExpenseCategoryHandler(serverCtx),
+				},
+				{
 					// 记录支出
 					Method:  http.MethodPost,
 					Path:    "/create",

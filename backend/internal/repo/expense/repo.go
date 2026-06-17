@@ -26,6 +26,8 @@ type Repository interface {
 	SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (float64, error)
 	// SumByDateRangeGrouped 按分类汇总支出
 	SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error)
+	// ListLogsByDateRange 查询指定日期范围内的支出记录
+	ListLogsByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]*Log, error)
 }
 
 // CategoryTotal 分类汇总
@@ -138,6 +140,14 @@ func (r *repo) SumByDateRange(ctx context.Context, userID uint64, start, end tim
 	return result.Total, err
 }
 
+func (r *repo) ListLogsByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]*Log, error) {
+	var list []*Log
+	err := r.getDB(ctx, tx...).
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Order("occurred_at ASC").
+		Find(&list).Error
+	return list, err
+}
 func (r *repo) SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error) {
 	var results []CategoryTotal
 	err := r.getDB(ctx, tx...).Model(&Log{}).

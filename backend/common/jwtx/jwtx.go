@@ -24,7 +24,6 @@ type Claims struct {
 type ClaimsParams struct {
 	UserID    uint64 `json:"user_id"`
 	TokenType string `json:"token_type"`
-	JTI       string `json:"jti"` // token 唯一 ID，refresh token 刷新后旧 JTI 立即失效
 }
 
 type Handler interface {
@@ -70,13 +69,11 @@ func GenerateJTI() string {
 
 func (h *HandlerImpl) SetAccessToken(claimsParams ClaimsParams) (string, error) {
 	claimsParams.TokenType = TokenTypeAccess
-	claimsParams.JTI = GenerateJTI()
 	return h.signToken(claimsParams, h.AccessExpire)
 }
 
 func (h *HandlerImpl) SetRefreshToken(claimsParams ClaimsParams) (string, error) {
 	claimsParams.TokenType = TokenTypeRefresh
-	claimsParams.JTI = GenerateJTI()
 	return h.signToken(claimsParams, h.RefreshExpire)
 }
 
@@ -86,6 +83,7 @@ func (h *HandlerImpl) signToken(claimsParams ClaimsParams, expire time.Duration)
 	claims := Claims{
 		ClaimsParams: claimsParams,
 		RegisteredClaims: jwtv5.RegisteredClaims{
+			ID:        GenerateJTI(),
 			IssuedAt:  jwtv5.NewNumericDate(now),
 			NotBefore: jwtv5.NewNumericDate(now),
 			ExpiresAt: jwtv5.NewNumericDate(now.Add(expire)),

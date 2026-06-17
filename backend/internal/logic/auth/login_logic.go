@@ -84,7 +84,7 @@ func (l *LoginLogic) loginByEmail(target string, req *types.LoginReq) (*types.Lo
 		l.Errorf("parse refresh token failed: %v", err)
 		return nil, errorx.WrapInternal("令牌解析失败", err)
 	}
-	if err := l.svcCtx.Repos.Token.Store(l.ctx, u.ID, claims.JTI, l.svcCtx.Config.JWTConf.RefreshExpireDuration()); err != nil {
+	if err := l.svcCtx.Repos.Token.Store(l.ctx, u.ID, claims.ID, l.svcCtx.Config.JWTConf.RefreshExpireDuration()); err != nil {
 		l.Errorf("store refresh token jti failed: %v", err)
 		return nil, errorx.WrapRedisSet("存储令牌失败", err)
 	}

@@ -22,8 +22,17 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 	periodStart, periodEnd := calcPeriod(periodType)
 
 	// 1. 查分类支出
-	categoryBreakdown, _ := svcCtx.Repos.Expense.SumByDateRangeGrouped(ctx, userID, periodStart, periodEnd)
-	totalExpense, _ := svcCtx.Repos.Expense.SumByDateRange(ctx, userID, periodStart, periodEnd)
+	categoryBreakdown, err := svcCtx.Repos.Expense.SumByDateRangeGrouped(ctx, userID, periodStart, periodEnd)
+	if err != nil {
+		return fmt.Errorf("query expense grouped: %w", err)
+	}
+	totalExpense, err := svcCtx.Repos.Expense.SumByDateRange(ctx, userID, periodStart, periodEnd)
+	if err != nil {
+		return fmt.Errorf("query expense total: %w", err)
+	}
+
+	// 1.5 查地点分布
+	locationBreakdown := buildLocationBreakdown(ctx, svcCtx, userID, periodStart, periodEnd)
 
 	// 2. 构建上下文（下级总结）
 	contextText := buildContext(ctx, svcCtx, periodType, userID, periodStart, periodEnd)
@@ -39,15 +48,18 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 总支出：%.2f 元
 分类明细：
 %s
+【地点分布】
+%s
 【上下文】
 %s
 
-请包含：1. 消费概况与分类分析 2. 变化趋势（对比上下文） 3. 改进建议。
+请包含：1. 消费概况与分类分析 2. 地点分布分析 3. 变化趋势（对比上下文） 4. 改进建议。
 如果数据为空或极少，请如实说明"今日无事"或"本周期无记录"，不用强行编造。`,
 		label,
 		periodStart.Format("2006-01-02"), periodEnd.Format("2006-01-02"),
 		totalExpense,
 		formatCategoryBreakdown(categoryBreakdown),
+		locationBreakdown,
 		contextText,
 	)
 
@@ -67,6 +79,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 		Source:            constvar.SummarySourceAI,
 		SummaryContent:    aiContent,
 		SuggestionContent: "",
+		Location:          locationBreakdown,
 	}
 
 	existing, err := svcCtx.Repos.Summary.FindByPeriod(ctx, userID, periodType, periodStart.Format("2006-01-02"))
@@ -176,4 +189,28 @@ func periodTypeLabelCN(t uint8) string {
 	default:
 		return "总结"
 	}
+}
+
+// buildLocationBreakdown 按地点汇总支出
+func buildLocationBreakdown(ctx context.Context, svcCtx *svc.ServiceContext, userID uint64, start, end time.Time) string {
+	logs, err := svcCtx.Repos.Expense.ListLogsByDateRange(ctx, userID, start, end)
+	if err != nil || len(logs) == 0 {
+		return "  无地点记录\n"
+	}
+
+	// 按地点汇总金额
+	locMap := make(map[string]float64)
+	for _, l := range logs {
+		loc := l.Location
+		if loc == "" {
+			loc = "未知"
+		}
+		locMap[loc] += l.Amount
+	}
+
+	var sb strings.Builder
+	for loc, total := range locMap {
+		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", loc, total))
+	}
+	return sb.String()
 }

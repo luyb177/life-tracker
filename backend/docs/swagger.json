@@ -26,6 +26,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "auth"
+        ],
         "summary": "登录账号",
         "operationId": "authLogin",
         "parameters": [
@@ -110,6 +113,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "auth"
+        ],
         "summary": "刷新令牌",
         "operationId": "authRefreshToken",
         "parameters": [
@@ -158,6 +164,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "auth"
         ],
         "summary": "注册账号",
         "operationId": "authRegister",
@@ -212,6 +221,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "auth"
+        ],
         "summary": "发送验证码",
         "operationId": "authSendVerificationCode",
         "parameters": [
@@ -259,6 +271,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "expense"
         ],
         "summary": "支出分类列表",
         "operationId": "expenseListExpenseCategory",
@@ -308,6 +323,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "expense"
+        ],
         "summary": "创建自定义分类",
         "operationId": "expenseCreateExpenseCategory",
         "parameters": [
@@ -338,6 +356,50 @@
         }
       }
     },
+    "/api/v1/expense/category/delete": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "删除自定义分类",
+        "operationId": "expenseDeleteExpenseCategory",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/expense/create": {
       "post": {
         "consumes": [
@@ -348,6 +410,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "expense"
         ],
         "summary": "记录支出",
         "operationId": "expenseCreateExpenseLog",
@@ -398,6 +463,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "expense"
+        ],
         "summary": "每日支出汇总",
         "operationId": "expenseDailyExpenseTotal",
         "parameters": [
@@ -438,6 +506,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "expense"
+        ],
         "summary": "删除支出记录",
         "operationId": "expenseDeleteExpenseLog",
         "parameters": [
@@ -475,6 +546,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "expense"
         ],
         "summary": "支出记录列表",
         "operationId": "expenseListExpenseLog",
@@ -572,6 +646,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "summary"
+        ],
         "summary": "创建总结（用户手动）",
         "operationId": "summaryCreateSummary",
         "parameters": [
@@ -611,7 +688,12 @@
           "200": {
             "description": "",
             "schema": {
-              "type": "object"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
             }
           }
         }
@@ -627,6 +709,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "summary"
         ],
         "summary": "删除总结",
         "operationId": "summaryDeleteSummary",
@@ -668,6 +753,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "summary"
         ],
         "summary": "AI 生成总结",
         "operationId": "summaryGenerateAISummary",
@@ -744,6 +832,9 @@
         ],
         "schemes": [
           "https"
+        ],
+        "tags": [
+          "summary"
         ],
         "summary": "总结列表",
         "operationId": "summaryListSummary",
@@ -844,6 +935,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "summary"
+        ],
         "summary": "更新总结",
         "operationId": "summaryUpdateSummary",
         "parameters": [
@@ -891,6 +985,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "user"
+        ],
         "summary": "修改密码",
         "operationId": "userChangePassword",
         "parameters": [
@@ -936,6 +1033,9 @@
         "schemes": [
           "https"
         ],
+        "tags": [
+          "user"
+        ],
         "summary": "修改用户信息",
         "operationId": "userUpdateUserInfo",
         "parameters": [
@@ -967,7 +1067,7 @@
       }
     }
   },
-  "x-date": "2026-06-16 23:46:17",
+  "x-date": "2026-06-17 16:47:06",
   "x-description": "This is a goctl generated swagger file.",
   "x-github": "https://github.com/zeromicro/go-zero",
   "x-go-zero-doc": "https://go-zero.dev/",

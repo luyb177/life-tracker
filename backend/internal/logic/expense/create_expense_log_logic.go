@@ -50,11 +50,15 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 		return nil, errorx.WrapBadRequest("时间格式无效", err)
 	}
 
+	// 从 IP 中间件获取地理位置
+	locStr := middleware.FullLocation(middleware.GetIPLocation(l.ctx))
+
 	log := &expense.Log{
 		UserID:     authUser.UserID,
 		CategoryID: req.CategoryID,
 		Amount:     req.Amount,
 		Note:       strings.TrimSpace(req.Note),
+		Location:   locStr,
 		OccurredAt: occurredAt,
 	}
 

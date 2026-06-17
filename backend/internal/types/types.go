@@ -40,6 +40,10 @@ type DailyExpenseTotalResp struct {
 	Total float64 `json:"total"`
 }
 
+type DeleteExpenseCategoryReq struct {
+	ID uint64 `json:"id"`
+}
+
 type DeleteExpenseLogReq struct {
 	ID uint64 `json:"id"`
 }
@@ -59,6 +63,7 @@ type ExpenseLogInfo struct {
 	Category   ExpenseCategoryInfo `json:"category"`
 	Amount     float64             `json:"amount"`
 	Note       string              `json:"note"`
+	Location   string              `json:"location,optional"`
 	OccurredAt string              `json:"occurred_at"`
 	CreatedAt  string              `json:"created_at"`
 }
@@ -158,6 +163,7 @@ type SummaryInfo struct {
 	Source            uint8  `json:"source"` // 1=AI, 2=用户
 	SummaryContent    string `json:"summary_content"`
 	SuggestionContent string `json:"suggestion_content,optional"`
+	Location          string `json:"location,optional"`
 	CreatedAt         string `json:"created_at"`
 	UpdatedAt         string `json:"updated_at"`
 }

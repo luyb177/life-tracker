@@ -1,0 +1,75 @@
+# ============================================================
+# Life Tracker - Docker Compose
+# ============================================================
+# 一键部署：
+#   docker compose up -d
+#
+# 服务说明：
+#   life-tracker           主 API 服务（端口 8888）
+#   life-tracker-scheduler  定时调度（日报 8:00 / 周报 周一 8:00 / 月报 1号 8:00 / 年报 1/1 8:00）
+#   life-tracker-cron       手动触发定时任务（profile: cron，按需运行）
+#
+# 部署前准备：
+#   1. etc/life_tracker.yaml  配置 MySQL、Redis、AI（DeepSeek）连接信息
+#   2. data/                  放置 ip2region_v4.xdb / ip2region_v6.xdb
+# ============================================================
+
+services:
+  # ─── 服务器 A：应用服务 ───
+  life-tracker:
+    image: crpi-u5azhs6neq326bz0.cn-hangzhou.personal.cr.aliyuncs.com/yub_lu/life-tracker:0.0.1
+    pull_policy: always
+    platform: linux/amd64
+    container_name: life-tracker
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./etc/life_tracker.yaml:/app/etc/life_tracker.yaml:ro
+      - ./data:/app/data:ro
+    restart: unless-stopped
+    networks:
+      - app-net
+
+  # ─── 服务器 A：定时任务（手动触发，需要时 docker compose run） ───
+  # 使用方式：
+  #   docker compose run --rm life-tracker-cron cron summary -t 1   # 日报
+  #   docker compose run --rm life-tracker-cron cron summary -t 2   # 周报
+  #   docker compose run --rm life-tracker-cron cron summary -t 3   # 月报
+  #   docker compose run --rm life-tracker-cron cron summary -t 4   # 年报
+  life-tracker-cron:
+    image: crpi-u5azhs6neq326bz0.cn-hangzhou.personal.cr.aliyuncs.com/yub_lu/life-tracker:0.0.1
+    pull_policy: always
+    platform: linux/amd64
+    container_name: life-tracker-cron
+    volumes:
+      - ./etc/life_tracker.yaml:/app/etc/life_tracker.yaml:ro
+      - ./data:/app/data:ro
+    networks:
+      - app-net
+    profiles:
+      - cron
+
+  # ─── 服务器 A：定时调度器（自动执行日报/周报/月报/年报） ───
+  life-tracker-scheduler:
+    image: crpi-u5azhs6neq326bz0.cn-hangzhou.personal.cr.aliyuncs.com/yub_lu/life-tracker:0.0.1
+    pull_policy: always
+    platform: linux/amd64
+    container_name: life-tracker-scheduler
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 8 * * * cd /app && cron summary -t 1"  > /var/spool/cron/crontabs/root
+        echo "0 8 * * 1 cd /app && cron summary -t 2" >> /var/spool/cron/crontabs/root
+        echo "0 8 1 * * cd /app && cron summary -t 3" >> /var/spool/cron/crontabs/root
+        echo "0 8 1 1 * cd /app && cron summary -t 4" >> /var/spool/cron/crontabs/root
+        exec crond -f -l 2
+    volumes:
+      - ./etc/life_tracker.yaml:/app/etc/life_tracker.yaml:ro
+      - ./data:/app/data:ro
+    restart: unless-stopped
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

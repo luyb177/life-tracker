@@ -31,7 +31,7 @@ func NewCreateSummaryLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 	}
 }
 
-func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.Response, error) {
+func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.IDResponse, error) {
 	authUser := middleware.GetAuthUser(l.ctx)
 	if authUser == nil {
 		return nil, errorx.ErrUnauthorized
@@ -53,6 +53,7 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		Source:            constvar.SummarySourceUser,
 		SummaryContent:    req.SummaryContent,
 		SuggestionContent: req.SuggestionContent,
+		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
 	}
 
 	if err := l.svcCtx.Repos.Summary.Create(l.ctx, s); err != nil {
@@ -60,5 +61,7 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		return nil, errorx.WrapDBInsert("创建总结失败", err)
 	}
 
-	return &types.Response{}, nil
+	return &types.IDResponse{
+		ID: s.ID,
+	}, nil
 }

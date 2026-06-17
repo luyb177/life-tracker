@@ -94,6 +94,7 @@ func (l *ListExpenseLogLogic) ListExpenseLog(req *types.ListExpenseLogReq) (*typ
 			},
 			Amount:     log.Amount,
 			Note:       log.Note,
+			Location:   log.Location,
 			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
 			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
 		})

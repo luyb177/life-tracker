@@ -33,6 +33,7 @@ type Log struct {
 	CategoryID uint64    `gorm:"type:bigint unsigned"`
 	Amount     float64   `gorm:"type:decimal(10,2)"`
 	Note       string    `gorm:"type:varchar(255)"`
+	Location   string    `gorm:"type:varchar(255)"`
 	OccurredAt time.Time `gorm:"index:idx_user_date;type:datetime"`
 }
 

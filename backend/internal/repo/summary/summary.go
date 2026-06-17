@@ -19,6 +19,7 @@ type Summary struct {
 	Source            uint8  `gorm:"type:tinyint unsigned"` // 1=AI, 2=用户
 	SummaryContent    string `gorm:"type:text"`
 	SuggestionContent string `gorm:"type:text"`
+	Location          string `gorm:"type:varchar(255)"`
 	Status            uint8  `gorm:"type:tinyint unsigned;default:1"`
 }
 
