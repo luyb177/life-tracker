@@ -40,7 +40,7 @@ func run(_ *cobra.Command, _ []string) error {
 	for _, userID := range userIDs {
 		if err := cronLogic.Run(context.Background(), internal.SvcCtx, periodType, userID, time.Time{}); err != nil {
 			logx.Errorf("AI %s summary failed for user %d: %v", label, userID, err)
-			return err
+			continue
 		}
 	}
 

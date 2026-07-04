@@ -61,7 +61,7 @@ type ExpenseByDateReq struct {
 
 type ExpenseByDateResp struct {
 	List  []ExpenseLogInfo `json:"list"`
-	Total int64            `json:"total"`
+	Total int64            `json:"total"` // 单位：分
 }
 
 type ExpenseCategoryInfo struct {
@@ -111,8 +111,8 @@ type ExpenseTrendPoint struct {
 }
 
 type GenerateAISummaryReq struct {
-	PeriodType  uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
-	PeriodStart string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
+	PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+	PeriodStart string `json:"period_start"`
 }
 
 type IDResponse struct {
@@ -207,10 +207,6 @@ type PageToken struct {
 	CreatedAt string `json:"created_at"`
 }
 
-type RefundExpenseLogReq struct {
-	ID uint64 `json:"id"`
-}
-
 type RefreshTokenReq struct {
 	RefreshToken string `json:"refresh_token"`
 }
@@ -218,6 +214,10 @@ type RefreshTokenReq struct {
 type RefreshTokenResp struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type RefundExpenseLogReq struct {
+	ID uint64 `json:"id"`
 }
 
 type RegisterReq struct {
@@ -238,10 +238,10 @@ type SendVerificationCodeReq struct {
 
 type SummaryInfo struct {
 	ID                uint64    `json:"id"`
-	PeriodType        uint8     `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
-	PeriodStart       string    `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
-	PeriodEnd         string    `json:"period_end"`   // 周期结束日期（开区间），统一使用 YYYY-MM-DD
-	Source            uint8     `json:"source"`       // 1=AI, 2=用户
+	PeriodType        uint8     `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+	PeriodStart       string    `json:"period_start"`
+	PeriodEnd         string    `json:"period_end"`
+	Source            uint8     `json:"source"` // 1=AI, 2=用户
 	SummaryContent    string    `json:"summary_content"`
 	SuggestionContent string    `json:"suggestion_content,optional"`
 	Title             string    `json:"title,optional"`

@@ -17,7 +17,7 @@ func (Tag) TableName() string {
 type LifeLogTag struct {
 	ID        uint64 `gorm:"primarykey;type:bigint unsigned auto_increment"`
 	LifeLogID uint64 `gorm:"uniqueIndex:idx_lifelog_tag;type:bigint unsigned"`
-	TagID     uint64 `gorm:"uniqueIndex:idx_lifelog_tag;type:bigint unsigned"`
+	TagID     uint64 `gorm:"uniqueIndex:idx_lifelog_tag;index:idx_lifelog_tag_tag;type:bigint unsigned"`
 }
 
 func (LifeLogTag) TableName() string {
@@ -28,7 +28,7 @@ func (LifeLogTag) TableName() string {
 type SummaryTag struct {
 	ID        uint64 `gorm:"primarykey;type:bigint unsigned auto_increment"`
 	SummaryID uint64 `gorm:"uniqueIndex:idx_summary_tag;type:bigint unsigned"`
-	TagID     uint64 `gorm:"uniqueIndex:idx_summary_tag;type:bigint unsigned"`
+	TagID     uint64 `gorm:"uniqueIndex:idx_summary_tag;index:idx_summary_tag_tag;type:bigint unsigned"`
 }
 
 func (SummaryTag) TableName() string {

@@ -302,11 +302,13 @@
                       "amount",
                       "note",
                       "occurred_at",
+                      "status",
                       "created_at"
                     ],
                     "properties": {
                       "amount": {
-                        "type": "number"
+                        "description": "单位：分",
+                        "type": "integer"
                       },
                       "category": {
                         "type": "object",
@@ -342,12 +344,20 @@
                       },
                       "occurred_at": {
                         "type": "string"
+                      },
+                      "refunded_at": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "description": "0=正常, 1=已退款",
+                        "type": "integer"
                       }
                     }
                   }
                 },
                 "total": {
-                  "type": "number"
+                  "description": "单位：分",
+                  "type": "integer"
                 }
               }
             }
@@ -521,7 +531,8 @@
               ],
               "properties": {
                 "amount": {
-                  "type": "number"
+                  "description": "单位：分",
+                  "type": "integer"
                 },
                 "category_id": {
                   "type": "integer"
@@ -541,46 +552,6 @@
             "description": "",
             "schema": {
               "type": "object"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/expense/daily_total": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "expense"
-        ],
-        "summary": "每日支出汇总",
-        "operationId": "expenseDailyExpenseTotal",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "date",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "date": {
-                  "type": "string"
-                },
-                "total": {
-                  "type": "number"
-                }
-              }
             }
           }
         }
@@ -676,11 +647,13 @@
                       "amount",
                       "note",
                       "occurred_at",
+                      "status",
                       "created_at"
                     ],
                     "properties": {
                       "amount": {
-                        "type": "number"
+                        "description": "单位：分",
+                        "type": "integer"
                       },
                       "category": {
                         "type": "object",
@@ -716,6 +689,13 @@
                       },
                       "occurred_at": {
                         "type": "string"
+                      },
+                      "refunded_at": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "description": "0=正常, 1=已退款",
+                        "type": "integer"
                       }
                     }
                   }
@@ -724,6 +704,50 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/expense/refund": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "expense"
+        ],
+        "summary": "退款",
+        "operationId": "expenseRefundExpenseLog",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
             }
           }
         }
@@ -781,7 +805,8 @@
                         "type": "string"
                       },
                       "total": {
-                        "type": "number"
+                        "description": "单位：分",
+                        "type": "integer"
                       }
                     }
                   }
@@ -840,54 +865,11 @@
                         "type": "string"
                       },
                       "total": {
-                        "type": "number"
+                        "description": "单位：分",
+                        "type": "integer"
                       }
                     }
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/expense/stats/range": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "expense"
-        ],
-        "summary": "区间支出总额",
-        "operationId": "expenseExpenseStatsRange",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "start",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "end",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "total": {
-                  "type": "number"
                 }
               }
             }
@@ -943,7 +925,8 @@
                         "type": "string"
                       },
                       "total": {
-                        "type": "number"
+                        "description": "单位：分",
+                        "type": "integer"
                       }
                     }
                   }
@@ -982,7 +965,8 @@
               ],
               "properties": {
                 "amount": {
-                  "type": "number"
+                  "description": "单位：分",
+                  "type": "integer"
                 },
                 "category_id": {
                   "type": "integer"
@@ -995,6 +979,376 @@
                 },
                 "occurred_at": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/life_log/by_date": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "lifelog"
+        ],
+        "summary": "按天查询生活记录",
+        "operationId": "lifelogLifeLogByDate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "\"2006-01-02\"",
+            "name": "date",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "content",
+                      "occurred_at",
+                      "created_at",
+                      "updated_at"
+                    ],
+                    "properties": {
+                      "content": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "occurred_at": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/life_log/create": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "lifelog"
+        ],
+        "summary": "创建生活记录",
+        "operationId": "lifelogCreateLifeLog",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "content",
+                "occurred_at"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "occurred_at": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/life_log/delete": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "lifelog"
+        ],
+        "summary": "删除生活记录",
+        "operationId": "lifelogDeleteLifeLog",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/life_log/list": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "lifelog"
+        ],
+        "summary": "生活记录列表（游标分页）",
+        "operationId": "lifelogListLifeLog",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "page_size",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "page_token",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "date",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "name": "tag_id",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "has_more": {
+                  "type": "boolean"
+                },
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "content",
+                      "occurred_at",
+                      "created_at",
+                      "updated_at"
+                    ],
+                    "properties": {
+                      "content": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "occurred_at": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "page_token": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/life_log/update": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "lifelog"
+        ],
+        "summary": "更新生活记录",
+        "operationId": "lifelogUpdateLifeLog",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "id"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "integer"
+                },
+                "occurred_at": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -1056,7 +1410,22 @@
                   "type": "string"
                 },
                 "tags": {
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 },
                 "title": {
                   "type": "string"
@@ -1073,98 +1442,6 @@
               "properties": {
                 "id": {
                   "type": "integer"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/summary/day": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "summary"
-        ],
-        "summary": "查询某天日报（用户+AI）",
-        "operationId": "summaryDaySummary",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "date",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "list": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "id",
-                      "period_type",
-                      "period_start",
-                      "period_end",
-                      "source",
-                      "summary_content",
-                      "created_at",
-                      "updated_at"
-                    ],
-                    "properties": {
-                      "created_at": {
-                        "type": "string"
-                      },
-                      "id": {
-                        "type": "integer"
-                      },
-                      "location": {
-                        "type": "string"
-                      },
-                      "period_end": {
-                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
-                        "type": "string"
-                      },
-                      "period_start": {
-                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
-                        "type": "string"
-                      },
-                      "period_type": {
-                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
-                        "type": "integer"
-                      },
-                      "source": {
-                        "description": "1=AI, 2=用户",
-                        "type": "integer"
-                      },
-                      "suggestion_content": {
-                        "type": "string"
-                      },
-                      "summary_content": {
-                        "type": "string"
-                      },
-                      "tags": {
-                        "type": "string"
-                      },
-                      "title": {
-                        "type": "string"
-                      },
-                      "updated_at": {
-                        "type": "string"
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -1245,11 +1522,10 @@
               ],
               "properties": {
                 "period_start": {
-                  "description": "周期起始日期，统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_type": {
-                  "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                  "description": "1=日报, 2=周报, 3=月报, 4=年报",
                   "type": "integer"
                 }
               }
@@ -1272,15 +1548,13 @@
                   "type": "string"
                 },
                 "period_end": {
-                  "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_start": {
-                  "description": "周期起始日期，统一使用 YYYY-MM-DD",
                   "type": "string"
                 },
                 "period_type": {
-                  "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                  "description": "1=日报, 2=周报, 3=月报, 4=年报",
                   "type": "integer"
                 },
                 "source": {
@@ -1294,7 +1568,22 @@
                   "type": "string"
                 },
                 "tags": {
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 },
                 "title": {
                   "type": "string"
@@ -1375,15 +1664,13 @@
                         "type": "string"
                       },
                       "period_end": {
-                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_start": {
-                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_type": {
-                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                        "description": "1=日报, 2=周报, 3=月报, 4=年报",
                         "type": "integer"
                       },
                       "source": {
@@ -1397,7 +1684,22 @@
                         "type": "string"
                       },
                       "tags": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        }
                       },
                       "title": {
                         "type": "string"
@@ -1481,15 +1783,13 @@
                         "type": "string"
                       },
                       "period_end": {
-                        "description": "周期结束日期（开区间），统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_start": {
-                        "description": "周期起始日期，统一使用 YYYY-MM-DD",
                         "type": "string"
                       },
                       "period_type": {
-                        "description": "1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结",
+                        "description": "1=日报, 2=周报, 3=月报, 4=年报",
                         "type": "integer"
                       },
                       "source": {
@@ -1503,145 +1803,27 @@
                         "type": "string"
                       },
                       "tags": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "integer"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          }
+                        }
                       },
                       "title": {
                         "type": "string"
                       },
                       "updated_at": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/summary/stats/tag_trend": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "summary"
-        ],
-        "summary": "标签按月趋势",
-        "operationId": "summaryTagTrend",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "start",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "end",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "months": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "month",
-                      "tags"
-                    ],
-                    "properties": {
-                      "month": {
-                        "type": "string"
-                      },
-                      "tags": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "required": [
-                            "tag",
-                            "count"
-                          ],
-                          "properties": {
-                            "count": {
-                              "type": "integer"
-                            },
-                            "tag": {
-                              "type": "string"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/summary/stats/tags": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "schemes": [
-          "https"
-        ],
-        "tags": [
-          "summary"
-        ],
-        "summary": "标签频次统计",
-        "operationId": "summaryTagStats",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "start",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "\"2006-01-02\"",
-            "name": "end",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "required": [
-                      "tag",
-                      "count"
-                    ],
-                    "properties": {
-                      "count": {
-                        "type": "integer"
-                      },
-                      "tag": {
                         "type": "string"
                       }
                     }
@@ -1690,7 +1872,22 @@
                   "type": "string"
                 },
                 "tags": {
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 },
                 "title": {
                   "type": "string"
@@ -1802,7 +1999,7 @@
       }
     }
   },
-  "x-date": "2026-06-17 21:31:52",
+  "x-date": "2026-07-04 21:09:45",
   "x-description": "This is a goctl generated swagger file.",
   "x-github": "https://github.com/zeromicro/go-zero",
   "x-go-zero-doc": "https://go-zero.dev/",

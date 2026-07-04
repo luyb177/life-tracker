@@ -42,8 +42,6 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 	// 2.5 获取用户日报（生活记录）
 	journalText := buildJournalContext(ctx, svcCtx, userID, periodStart, periodEnd)
 
-	extraContext := ""
-
 	// 3. 构建 Prompt
 	label := periodTypeLabelCN(periodType)
 	systemPrompt := "你是一个个人生活助手。请根据提供的数据生成简洁的「" + label + "」总结。用中文回复，语气亲切。"
@@ -59,7 +57,6 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 %s
 【用户记录】
 %s
-%s
 【上下文】
 %s
 
@@ -71,7 +68,6 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 		formatCategoryBreakdown(categoryBreakdown),
 		locationBreakdown,
 		journalText,
-		extraContext,
 		contextText,
 	)
 
@@ -135,7 +131,7 @@ func buildContext(ctx context.Context, svcCtx *svc.ServiceContext, periodType ui
 		return "（无历史上下文）"
 	}
 
-	summaries, err := svcCtx.Repos.Summary.FindByPeriodRange(ctx, userID, childType, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	summaries, err := svcCtx.Repos.Summary.FindByPeriodRangeAndSource(ctx, userID, childType, start.Format("2006-01-02"), end.Format("2006-01-02"), constvar.SummarySourceAI)
 	if err != nil || len(summaries) == 0 {
 		return "（无历史上下文）"
 	}
@@ -246,9 +242,12 @@ func buildLocationBreakdown(ctx context.Context, svcCtx *svc.ServiceContext, use
 		return "  无地点记录\n"
 	}
 
-	// 按地点汇总金额
+	// 按地点汇总金额（排除已退款）
 	locMap := make(map[string]int64)
 	for _, l := range logs {
+		if l.Status == 1 {
+			continue
+		}
 		loc := l.Location
 		if loc == "" {
 			loc = "未知"

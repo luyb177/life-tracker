@@ -248,13 +248,13 @@ type (
 	ExpenseLogInfo {
 		ID         uint64              `json:"id"`
 		Category   ExpenseCategoryInfo `json:"category"`
-		Amount     float64             `json:"amount"`
-		Note       string `json:"note"`
-		Location   string `json:"location,optional"`
-		OccurredAt string `json:"occurred_at"`
-		Status     uint8  `json:"status"` // 0=正常, 1=已退款
-		RefundedAt string `json:"refunded_at,optional"`
-		CreatedAt  string `json:"created_at"`
+		Amount     int64               `json:"amount"` // 单位：分
+		Note       string              `json:"note"`
+		Location   string              `json:"location,optional"`
+		OccurredAt string              `json:"occurred_at"`
+		Status     uint8               `json:"status"` // 0=正常, 1=已退款
+		RefundedAt string              `json:"refunded_at,optional"`
+		CreatedAt  string              `json:"created_at"`
 	}
 	CreateExpenseCategoryReq {
 		Name string `json:"name"`
@@ -264,8 +264,8 @@ type (
 	}
 	CreateExpenseLogReq {
 		CategoryID uint64  `json:"category_id"`
-		Amount     float64 `json:"amount"`
-		Note       string  `json:"note,optional"`
+		Amount     int64   `json:"amount"` // 单位：分
+		Note       *string `json:"note,optional"`
 		OccurredAt string  `json:"occurred_at"`
 	}
 	DeleteExpenseLogReq {
@@ -277,8 +277,8 @@ type (
 	UpdateExpenseLogReq {
 		ID         uint64  `json:"id"`
 		CategoryID uint64  `json:"category_id,optional"`
-		Amount     float64 `json:"amount,optional"`
-		Note       string  `json:"note,optional"`
+		Amount     int64   `json:"amount,optional"` // 单位：分
+		Note       *string `json:"note,optional"`
 		OccurredAt string  `json:"occurred_at,optional"`
 	}
 	ExpenseByDateReq {
@@ -286,7 +286,7 @@ type (
 	}
 	ExpenseByDateResp {
 		List  []ExpenseLogInfo `json:"list"`
-		Total float64          `json:"total"`
+		Total int64            `json:"total"` // 单位：分
 	}
 	ListExpenseLogReq {
 		PageSize  uint32 `form:"page_size"`
@@ -304,30 +304,27 @@ type (
 		Start string `form:"start"` // "2006-01-02"
 		End   string `form:"end"` // "2006-01-02"
 	}
-	ExpenseStatsRangeResp {
-		Total float64 `json:"total"`
-	}
 	ExpenseStatsCategoryResp {
 		Categories []ExpenseCategoryStat `json:"categories"`
 	}
 	ExpenseCategoryStat {
-		CategoryID   uint64  `json:"category_id"`
-		CategoryName string  `json:"category_name"`
-		Total        float64 `json:"total"`
+		CategoryID   uint64 `json:"category_id"`
+		CategoryName string `json:"category_name"`
+		Total        int64  `json:"total"` // 单位：分
 	}
 	ExpenseStatsTrendResp {
 		Points []ExpenseTrendPoint `json:"points"`
 	}
 	ExpenseTrendPoint {
-		Date  string  `json:"date"`
-		Total float64 `json:"total"`
+		Date  string `json:"date"`
+		Total int64  `json:"total"` // 单位：分
 	}
 	ExpenseMonthlyTrendResp {
 		Points []MonthTotal `json:"points"`
 	}
 	MonthTotal {
-		Month string  `json:"month"`
-		Total float64 `json:"total"`
+		Month string `json:"month"`
+		Total int64  `json:"total"` // 单位：分
 	}
 )
 
@@ -362,6 +359,10 @@ service life_tracker {
 	@handler UpdateExpenseLog
 	post /update (UpdateExpenseLogReq) returns (Response)
 
+	@doc "退款"
+	@handler RefundExpenseLog
+	post /refund (RefundExpenseLogReq) returns (Response)
+
 	@doc "查询某天支出明细"
 	@handler ExpenseByDate
 	get /by_date (ExpenseByDateReq) returns (ExpenseByDateResp)
@@ -369,14 +370,6 @@ service life_tracker {
 	@doc "支出记录列表"
 	@handler ListExpenseLog
 	get /list (ListExpenseLogReq) returns (ListExpenseLogResp)
-
-	@doc "每日支出汇总"
-	@handler DailyExpenseTotal
-	get /daily_total (DailyExpenseTotalReq) returns (DailyExpenseTotalResp)
-
-	@doc "区间支出总额"
-	@handler ExpenseStatsRange
-	get /stats/range (ExpenseStatsReq) returns (ExpenseStatsRangeResp)
 
 	@doc "分类支出占比"
 	@handler ExpenseStatsCategory
@@ -463,3 +456,4 @@ service life_tracker {
 	@handler LifeLogByDate
 	get /by_date (LifeLogByDateReq) returns (LifeLogByDateResp)
 }
+
