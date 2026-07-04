@@ -85,12 +85,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: expense.CreateExpenseLogHandler(serverCtx),
 				},
 				{
-					// 每日支出汇总
-					Method:  http.MethodGet,
-					Path:    "/daily_total",
-					Handler: expense.DailyExpenseTotalHandler(serverCtx),
-				},
-				{
 					// 删除支出记录
 					Method:  http.MethodPost,
 					Path:    "/delete",

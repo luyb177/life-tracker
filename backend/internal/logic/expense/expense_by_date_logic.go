@@ -50,31 +50,29 @@ func (l *ExpenseByDateLogic) ExpenseByDate(req *types.ExpenseByDateReq) (*types.
 		return nil, errorx.WrapDBQuery("查询支出记录失败", err)
 	}
 
-	var total float64
+	// 批量查询分类（含系统默认）
+	categoryMap := make(map[uint64]string)
+	categories, _ := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
+	for _, c := range categories {
+		categoryMap[c.ID] = c.Name
+	}
+
+	var total int64
 	items := make([]types.ExpenseLogInfo, 0, len(logs))
 	for _, log := range logs {
 		total += log.Amount
 		items = append(items, types.ExpenseLogInfo{
-			ID:         log.ID,
-			Category:   types.ExpenseCategoryInfo{ID: log.CategoryID},
+			ID: log.ID,
+			Category: types.ExpenseCategoryInfo{
+				ID:   log.CategoryID,
+				Name: categoryMap[log.CategoryID],
+			},
 			Amount:     log.Amount,
 			Note:       log.Note,
 			Location:   log.Location,
 			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
 			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
 		})
-	}
-
-	// 批量填充分类名
-	if len(logs) > 0 {
-		categories, _ := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
-		catMap := make(map[uint64]string, len(categories))
-		for _, c := range categories {
-			catMap[c.ID] = c.Name
-		}
-		for i := range items {
-			items[i].Category.Name = catMap[items[i].Category.ID]
-		}
 	}
 
 	return &types.ExpenseByDateResp{List: items, Total: total}, nil

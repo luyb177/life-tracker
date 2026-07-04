@@ -55,7 +55,7 @@ func (l *UpdateExpenseLogLogic) UpdateExpenseLog(req *types.UpdateExpenseLogReq)
 		if err != nil {
 			return nil, errorx.WrapDBQuery("查询分类失败", err)
 		}
-		if cat == nil || cat.UserID != authUser.UserID {
+		if cat == nil || (cat.UserID != 0 && cat.UserID != authUser.UserID) {
 			return nil, errorx.WrapBadRequest("分类无效", nil)
 		}
 		updates["category_id"] = req.CategoryID
@@ -63,8 +63,11 @@ func (l *UpdateExpenseLogLogic) UpdateExpenseLog(req *types.UpdateExpenseLogReq)
 	if req.Amount > 0 {
 		updates["amount"] = req.Amount
 	}
-	if req.Note != "" {
-		updates["note"] = strings.TrimSpace(req.Note)
+	if req.Note != nil {
+		if len([]rune(*req.Note)) > 255 {
+			return nil, errorx.WrapBadRequest("备注过长", nil)
+		}
+		updates["note"] = strings.TrimSpace(*req.Note)
 	}
 	if req.OccurredAt != "" {
 		occurredAt, err := time.ParseInLocation(time.DateTime, req.OccurredAt, constvar.TimeLocation)

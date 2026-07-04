@@ -21,10 +21,10 @@ type Repository interface {
 	DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	FindLogByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Log, error)
 	ListLogsByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Log, error)
-	// SumByDate 汇总某用户指定日期的总支出
-	SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (float64, error)
-	// SumByDateRange 汇总某用户指定日期范围的总支出
-	SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (float64, error)
+	// SumByDate 汇总某用户指定日期的总支出（单位：分）
+	SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (int64, error)
+	// SumByDateRange 汇总某用户指定日期范围的总支出（单位：分）
+	SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (int64, error)
 	// SumByDateRangeGrouped 按分类汇总支出
 	SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error)
 	// ListLogsByDateRange 查询指定日期范围内的支出记录
@@ -39,21 +39,21 @@ type Repository interface {
 
 // CategoryTotal 分类汇总
 type CategoryTotal struct {
-	CategoryID   uint64  `json:"category_id"`
-	CategoryName string  `json:"category_name"`
-	Total        float64 `json:"total"`
+	CategoryID   uint64 `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	Total        int64  `json:"total"` // 单位：分
 }
 
 // DayTotal 按天汇总
 type DayTotal struct {
-	Date  string  `json:"date"`
-	Total float64 `json:"total"`
+	Date  string `json:"date"`
+	Total int64  `json:"total"` // 单位：分
 }
 
 // MonthTotal 按月汇总
 type MonthTotal struct {
-	Month string  `json:"month"` // "2026-01"
-	Total float64 `json:"total"`
+	Month string `json:"month"` // "2026-01"
+	Total int64  `json:"total"` // 单位：分
 }
 
 type repo struct {
@@ -79,7 +79,7 @@ func (r *repo) CreateCategory(ctx context.Context, c *Category, tx ...*gorm.DB) 
 
 func (r *repo) FindCategoriesByUser(ctx context.Context, userID uint64, tx ...*gorm.DB) ([]*Category, error) {
 	var list []*Category
-	err := r.getDB(ctx, tx...).Where("user_id = ?", userID).Order("id ASC").Find(&list).Error
+	err := r.getDB(ctx, tx...).Where("user_id = ? OR user_id = 0", userID).Order("id ASC").Find(&list).Error
 	return list, err
 }
 
@@ -138,12 +138,12 @@ func (r *repo) ListLogsByUser(ctx context.Context, userID uint64, cursorID uint6
 	return list, nil
 }
 
-func (r *repo) SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (float64, error) {
+func (r *repo) SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (int64, error) {
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	var result struct {
-		Total float64
+		Total int64
 	}
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("COALESCE(SUM(amount), 0) as total").
@@ -152,9 +152,9 @@ func (r *repo) SumByDate(ctx context.Context, userID uint64, date time.Time, tx 
 	return result.Total, err
 }
 
-func (r *repo) SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (float64, error) {
+func (r *repo) SumByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) (int64, error) {
 	var result struct {
-		Total float64
+		Total int64
 	}
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("COALESCE(SUM(amount), 0) as total").
@@ -171,11 +171,12 @@ func (r *repo) ListLogsByDateRange(ctx context.Context, userID uint64, start, en
 		Find(&list).Error
 	return list, err
 }
+
 func (r *repo) SumByDateRangeGrouped(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]CategoryTotal, error) {
 	var results []CategoryTotal
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("expense_logs.category_id, expense_categories.name as category_name, COALESCE(SUM(expense_logs.amount), 0) as total").
-		Joins("LEFT JOIN expense_categories ON expense_categories.id = expense_logs.category_id").
+		Joins("LEFT JOIN expense_categories ON expense_categories.id = expense_logs.category_id AND expense_categories.deleted_at = 0").
 		Where("expense_logs.user_id = ? AND expense_logs.occurred_at >= ? AND expense_logs.occurred_at < ?", userID, start, end).
 		Group("expense_logs.category_id, expense_categories.name").
 		Order("total DESC").

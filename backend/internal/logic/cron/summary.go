@@ -67,7 +67,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 如果数据为空或极少，请如实说明"今日无事"或"本周期无记录"，不用强行编造。`,
 		label,
 		periodStart.Format("2006-01-02"), periodEnd.Format("2006-01-02"),
-		totalExpense,
+		float64(totalExpense)/100,
 		formatCategoryBreakdown(categoryBreakdown),
 		locationBreakdown,
 		journalText,
@@ -219,7 +219,7 @@ func formatCategoryBreakdown(ct []expenseRepo.CategoryTotal) string {
 	}
 	var sb strings.Builder
 	for _, c := range ct {
-		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", c.CategoryName, c.Total))
+		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", c.CategoryName, float64(c.Total)/100))
 	}
 	return sb.String()
 }
@@ -247,7 +247,7 @@ func buildLocationBreakdown(ctx context.Context, svcCtx *svc.ServiceContext, use
 	}
 
 	// 按地点汇总金额
-	locMap := make(map[string]float64)
+	locMap := make(map[string]int64)
 	for _, l := range logs {
 		loc := l.Location
 		if loc == "" {
@@ -258,7 +258,7 @@ func buildLocationBreakdown(ctx context.Context, svcCtx *svc.ServiceContext, use
 
 	var sb strings.Builder
 	for loc, total := range locMap {
-		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", loc, total))
+		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", loc, float64(total)/100))
 	}
 	return sb.String()
 }

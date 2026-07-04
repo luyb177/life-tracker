@@ -59,5 +59,8 @@ func parseDateRange(startStr, endStr string) (time.Time, time.Time, error) {
 	if err != nil {
 		return time.Time{}, time.Time{}, errorx.WrapBadRequest("结束日期格式无效", err)
 	}
+	if end.Before(start) {
+		return time.Time{}, time.Time{}, errorx.WrapBadRequest("结束日期不能早于起始日期", nil)
+	}
 	return start, end.Add(24 * time.Hour), nil
 }

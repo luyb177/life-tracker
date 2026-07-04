@@ -18,8 +18,8 @@ type CreateExpenseCategoryReq struct {
 
 type CreateExpenseLogReq struct {
 	CategoryID uint64  `json:"category_id"`
-	Amount     float64 `json:"amount"`
-	Note       string  `json:"note,optional"`
+	Amount     int64   `json:"amount"` // 单位：分
+	Note       *string `json:"note,optional"`
 	OccurredAt string  `json:"occurred_at"`
 }
 
@@ -37,15 +37,6 @@ type CreateSummaryReq struct {
 	SuggestionContent string    `json:"suggestion_content,optional"`
 	Title             string    `json:"title,optional"`
 	Tags              []TagInfo `json:"tags,optional"`
-}
-
-type DailyExpenseTotalReq struct {
-	Date string `form:"date"` // "2006-01-02"
-}
-
-type DailyExpenseTotalResp struct {
-	Date  string  `json:"date"`
-	Total float64 `json:"total"`
 }
 
 type DeleteExpenseCategoryReq struct {
@@ -70,7 +61,7 @@ type ExpenseByDateReq struct {
 
 type ExpenseByDateResp struct {
 	List  []ExpenseLogInfo `json:"list"`
-	Total float64          `json:"total"`
+	Total int64            `json:"total"`
 }
 
 type ExpenseCategoryInfo struct {
@@ -80,15 +71,15 @@ type ExpenseCategoryInfo struct {
 }
 
 type ExpenseCategoryStat struct {
-	CategoryID   uint64  `json:"category_id"`
-	CategoryName string  `json:"category_name"`
-	Total        float64 `json:"total"`
+	CategoryID   uint64 `json:"category_id"`
+	CategoryName string `json:"category_name"`
+	Total        int64  `json:"total"` // 单位：分
 }
 
 type ExpenseLogInfo struct {
 	ID         uint64              `json:"id"`
 	Category   ExpenseCategoryInfo `json:"category"`
-	Amount     float64             `json:"amount"`
+	Amount     int64               `json:"amount"` // 单位：分
 	Note       string              `json:"note"`
 	Location   string              `json:"location,optional"`
 	OccurredAt string              `json:"occurred_at"`
@@ -104,7 +95,7 @@ type ExpenseStatsCategoryResp struct {
 }
 
 type ExpenseStatsRangeResp struct {
-	Total float64 `json:"total"`
+	Total int64 `json:"total"` // 单位：分
 }
 
 type ExpenseStatsReq struct {
@@ -117,8 +108,8 @@ type ExpenseStatsTrendResp struct {
 }
 
 type ExpenseTrendPoint struct {
-	Date  string  `json:"date"`
-	Total float64 `json:"total"`
+	Date  string `json:"date"`
+	Total int64  `json:"total"` // 单位：分
 }
 
 type GenerateAISummaryReq struct {
@@ -209,8 +200,8 @@ type LoginResp struct {
 }
 
 type MonthTotal struct {
-	Month string  `json:"month"`
-	Total float64 `json:"total"`
+	Month string `json:"month"`
+	Total int64  `json:"total"` // 单位：分
 }
 
 type PageToken struct {
@@ -276,8 +267,8 @@ type TagInfo struct {
 type UpdateExpenseLogReq struct {
 	ID         uint64  `json:"id"`
 	CategoryID uint64  `json:"category_id,optional"`
-	Amount     float64 `json:"amount,optional"`
-	Note       string  `json:"note,optional"`
+	Amount     int64   `json:"amount,optional"` // 单位：分
+	Note       *string `json:"note,optional"`
 	OccurredAt string  `json:"occurred_at,optional"`
 }
 

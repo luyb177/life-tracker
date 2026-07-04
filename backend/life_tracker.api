@@ -292,13 +292,6 @@ type (
 		PageToken string           `json:"page_token"`
 		HasMore   bool             `json:"has_more"`
 	}
-	DailyExpenseTotalReq {
-		Date string `form:"date"` // "2006-01-02"
-	}
-	DailyExpenseTotalResp {
-		Date  string  `json:"date"`
-		Total float64 `json:"total"`
-	}
 	ListExpenseCategoryResp {
 		Categories []ExpenseCategoryInfo `json:"categories"`
 	}

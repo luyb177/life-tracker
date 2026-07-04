@@ -37,13 +37,29 @@ func (l *CreateExpenseCategoryLogic) CreateExpenseCategory(req *types.CreateExpe
 		return nil, errorx.ErrUnauthorized
 	}
 
-	if strings.TrimSpace(req.Name) == "" {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
 		return nil, errorx.WrapBadRequest("分类名称不能为空", nil)
+	}
+	if len([]rune(name)) > 50 {
+		return nil, errorx.WrapBadRequest("分类名称过长", nil)
+	}
+
+	// 检查是否已存在同名分类（含系统默认）
+	existing, err := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
+	if err != nil {
+		l.Errorf("find categories failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询分类失败", err)
+	}
+	for _, c := range existing {
+		if c.Name == name {
+			return nil, errorx.WrapBadRequest("该分类已存在", nil)
+		}
 	}
 
 	c := &expense.Category{
 		UserID: authUser.UserID,
-		Name:   strings.TrimSpace(req.Name),
+		Name:   name,
 		Type:   constvar.ExpenseCategoryTypeUser,
 	}
 

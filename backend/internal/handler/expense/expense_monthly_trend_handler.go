@@ -27,8 +27,8 @@ func ExpenseMonthlyTrendHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		resp, err := l.ExpenseMonthlyTrend(&req)
 		if err != nil {
 			respx.ErrorCtx(r.Context(), w, err)
-		} else {
-			respx.OkCtx(r.Context(), w, resp)
+			return
 		}
+		respx.OkCtx(r.Context(), w, resp)
 	}
 }

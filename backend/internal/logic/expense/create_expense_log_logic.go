@@ -39,7 +39,7 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 	}
 
 	if req.Amount <= 0 {
-		return nil, errorx.WrapBadRequest("金额必须大于0", nil)
+		return nil, errorx.WrapBadRequest("金额必须大于0（单位：分）", nil)
 	}
 	if req.CategoryID == 0 {
 		return nil, errorx.WrapBadRequest("请选择分类", nil)
@@ -53,8 +53,13 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 	if category == nil {
 		return nil, errorx.ErrNotFound
 	}
-	if category.UserID != authUser.UserID {
+	// 系统默认(user_id=0)或用户本人的分类才允许
+	if category.UserID != 0 && category.UserID != authUser.UserID {
 		return nil, errorx.ErrForbidden
+	}
+
+	if req.Note != nil && len([]rune(*req.Note)) > 255 {
+		return nil, errorx.WrapBadRequest("备注过长", nil)
 	}
 
 	occurredAt, err := time.ParseInLocation(time.DateTime, req.OccurredAt, constvar.TimeLocation)
@@ -65,11 +70,16 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 	// 从 IP 中间件获取地理位置
 	locStr := middleware.FullLocation(middleware.GetIPLocation(l.ctx))
 
+	note := ""
+	if req.Note != nil {
+		note = strings.TrimSpace(*req.Note)
+	}
+
 	log := &expense.Log{
 		UserID:     authUser.UserID,
 		CategoryID: req.CategoryID,
 		Amount:     req.Amount,
-		Note:       strings.TrimSpace(req.Note),
+		Note:       note,
 		Location:   locStr,
 		OccurredAt: occurredAt,
 	}
