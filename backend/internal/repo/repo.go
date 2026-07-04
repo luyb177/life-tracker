@@ -4,6 +4,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/repo/expense"
 	"github.com/luyb177/life-tracker/backend/internal/repo/lifelog"
 	"github.com/luyb177/life-tracker/backend/internal/repo/summary"
+	"github.com/luyb177/life-tracker/backend/internal/repo/tag"
 	"github.com/luyb177/life-tracker/backend/internal/repo/token"
 	"github.com/luyb177/life-tracker/backend/internal/repo/user"
 	"github.com/luyb177/life-tracker/backend/internal/repo/verify"
@@ -18,6 +19,7 @@ type Repositories struct {
 	Summary summary.Repository
 	Expense expense.Repository
 	LifeLog lifelog.Repository
+	Tag     tag.Repository
 	db      *gorm.DB
 }
 
@@ -29,6 +31,7 @@ func NewRepositories(redisClient *redis.Client, db *gorm.DB) *Repositories {
 		Summary: summary.NewRepository(db),
 		Expense: expense.NewRepository(db),
 		LifeLog: lifelog.NewRepository(db),
+		Tag:     tag.NewRepository(db),
 		db:      db,
 	}
 }

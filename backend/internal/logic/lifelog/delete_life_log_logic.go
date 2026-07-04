@@ -47,6 +47,12 @@ func (l *DeleteLifeLogLogic) DeleteLifeLog(req *types.DeleteLifeLogReq) (resp *t
 		return nil, errorx.ErrForbidden
 	}
 
+	// 先删除标签关联，再删生活记录
+	if err := l.svcCtx.Repos.Tag.DeleteByLifeLogID(l.ctx, req.ID); err != nil {
+		l.Errorf("delete life log tags failed: %v", err)
+		return nil, errorx.WrapDBDelete("删除标签关联失败", err)
+	}
+
 	if err := l.svcCtx.Repos.LifeLog.Delete(l.ctx, req.ID); err != nil {
 		l.Errorf("delete life log failed: %v", err)
 		return nil, errorx.WrapDBDelete("删除生活记录失败", err)

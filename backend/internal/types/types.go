@@ -3,6 +3,11 @@
 
 package types
 
+type TagInfo struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
 type AuthUser struct {
 	UserID uint64 `json:"user_id"`
 }
@@ -24,9 +29,9 @@ type CreateExpenseLogReq struct {
 }
 
 type CreateLifeLogReq struct {
-	Content    string `json:"content"`
-	Tags       string `json:"tags,optional"`
-	OccurredAt string `json:"occurred_at"`
+	Content    string    `json:"content"`
+	Tags       []TagInfo `json:"tags,optional"`
+	OccurredAt string    `json:"occurred_at"`
 }
 
 type CreateSummaryReq struct {
@@ -148,12 +153,12 @@ type LifeLogByDateResp struct {
 }
 
 type LifeLogInfo struct {
-	ID         uint64 `json:"id"`
-	Content    string `json:"content"`
-	Tags       string `json:"tags,optional"`
-	OccurredAt string `json:"occurred_at"`
-	CreatedAt  string `json:"created_at"`
-	UpdatedAt  string `json:"updated_at"`
+	ID         uint64    `json:"id"`
+	Content    string    `json:"content"`
+	Tags       []TagInfo `json:"tags,optional"`
+	OccurredAt string    `json:"occurred_at"`
+	CreatedAt  string    `json:"created_at"`
+	UpdatedAt  string    `json:"updated_at"`
 }
 
 type ListExpenseCategoryResp struct {
@@ -175,7 +180,7 @@ type ListLifeLogReq struct {
 	PageSize  uint32 `form:"page_size"`
 	PageToken string `form:"page_token,optional"`
 	Date      string `form:"date,optional"`
-	Tag       string `form:"tag,optional"`
+	TagID     uint64 `form:"tag_id,optional"`
 }
 
 type ListLifeLogResp struct {
@@ -308,10 +313,10 @@ type UpdateExpenseLogReq struct {
 }
 
 type UpdateLifeLogReq struct {
-	ID         uint64 `json:"id"`
-	Content    string `json:"content,optional"`
-	Tags       string `json:"tags,optional"`
-	OccurredAt string `json:"occurred_at,optional"`
+	ID         uint64    `json:"id"`
+	Content    string    `json:"content,optional"`
+	Tags       []TagInfo `json:"tags,optional"`
+	OccurredAt string    `json:"occurred_at,optional"`
 }
 
 type UpdateSummaryReq struct {

@@ -13,8 +13,10 @@ type Repository interface {
 	Update(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 	Delete(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*LifeLog, error)
-	// ListByUser 游标分页，按 occurred_at 倒序。tag 非空时按标签过滤。
-	ListByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tag string, tx ...*gorm.DB) ([]*LifeLog, error)
+	// ListByUser 游标分页，按 occurred_at 倒序
+	ListByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*LifeLog, error)
+	// ListByUserAndIDs 在指定 ID 范围内游标分页（用于标签过滤后回查）
+	ListByUserAndIDs(ctx context.Context, userID uint64, ids []uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*LifeLog, error)
 	// FindByDateRange 查询指定日期范围内的生活记录（按 occurred_at 升序）
 	FindByDateRange(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]*LifeLog, error)
 }
@@ -56,12 +58,31 @@ func (r *repo) FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*LifeLo
 }
 
 // ListByUser 游标分页，按 occurred_at DESC, id DESC
-func (r *repo) ListByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tag string, tx ...*gorm.DB) ([]*LifeLog, error) {
+func (r *repo) ListByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*LifeLog, error) {
 	db := r.getDB(ctx, tx...).Model(&LifeLog{}).Where("user_id = ?", userID)
 
-	if tag != "" {
-		db = db.Where("FIND_IN_SET(?, tags)", tag)
+	if cursorID == 0 {
+		db = db.Order("occurred_at DESC, id DESC").Limit(limit)
+	} else {
+		db = db.Where(
+			"occurred_at < ? OR (occurred_at = ? AND id < ?)", cursorTime, cursorTime, cursorID,
+		).Order("occurred_at DESC, id DESC").Limit(limit)
 	}
+
+	var list []*LifeLog
+	if err := db.Find(&list).Error; err != nil {
+		return nil, err
+	}
+	return list, nil
+}
+
+// ListByUserAndIDs 在指定 ID 范围内游标分页
+func (r *repo) ListByUserAndIDs(ctx context.Context, userID uint64, ids []uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*LifeLog, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	db := r.getDB(ctx, tx...).Model(&LifeLog{}).Where("user_id = ? AND id IN ?", userID, ids)
 
 	if cursorID == 0 {
 		db = db.Order("occurred_at DESC, id DESC").Limit(limit)

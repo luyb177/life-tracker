@@ -10,6 +10,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/constvar"
 	"github.com/luyb177/life-tracker/backend/internal/middleware"
+	"github.com/luyb177/life-tracker/backend/internal/repo/tag"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
@@ -49,12 +50,31 @@ func (l *LifeLogByDateLogic) LifeLogByDate(req *types.LifeLogByDateReq) (resp *t
 		return nil, errorx.WrapDBQuery("查询生活记录失败", err)
 	}
 
+	// 批量查标签
+	lifeLogIDs := make([]uint64, 0, len(logs))
+	for _, log := range logs {
+		lifeLogIDs = append(lifeLogIDs, log.ID)
+	}
+	tagMap, err := l.svcCtx.Repos.Tag.BatchFindByLifeLogIDs(l.ctx, lifeLogIDs)
+	if err != nil {
+		l.Errorf("batch find tags failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询标签失败", err)
+	}
+
 	items := make([]types.LifeLogInfo, 0, len(logs))
 	for _, log := range logs {
+		tags := tagMap[log.ID]
+		if tags == nil {
+			tags = []*tag.Tag{}
+		}
+		tagInfos := make([]types.TagInfo, 0, len(tags))
+		for _, t := range tags {
+			tagInfos = append(tagInfos, types.TagInfo{ID: t.ID, Name: t.Name})
+		}
 		items = append(items, types.LifeLogInfo{
 			ID:         log.ID,
 			Content:    log.Content,
-			Tags:       log.Tags,
+			Tags:       tagInfos,
 			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
 			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
 			UpdatedAt:  log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),

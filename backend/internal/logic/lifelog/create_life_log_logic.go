@@ -51,16 +51,29 @@ func (l *CreateLifeLogLogic) CreateLifeLog(req *types.CreateLifeLogReq) (resp *t
 		return nil, errorx.WrapBadRequest("时间格式无效", err)
 	}
 
+	// 解析标签：id=0 则按名称创建，id>0 则验证存在
+	tagIDs, err := resolveTags(l.ctx, l.svcCtx, req.Tags)
+	if err != nil {
+		return nil, err
+	}
+
 	log := &lifelog.LifeLog{
 		UserID:     authUser.UserID,
 		Content:    strings.TrimSpace(req.Content),
-		Tags:       strings.TrimSpace(req.Tags),
 		OccurredAt: occurredAt,
 	}
 
 	if err := l.svcCtx.Repos.LifeLog.Create(l.ctx, log); err != nil {
 		l.Errorf("create life log failed: %v", err)
 		return nil, errorx.WrapDBInsert("创建生活记录失败", err)
+	}
+
+	// 关联标签
+	if len(tagIDs) > 0 {
+		if err := l.svcCtx.Repos.Tag.BatchLink(l.ctx, log.ID, tagIDs); err != nil {
+			l.Errorf("link tags failed: %v", err)
+			return nil, errorx.WrapDBInsert("关联标签失败", err)
+		}
 	}
 
 	return &types.IDResponse{ID: log.ID}, nil

@@ -15,7 +15,6 @@ type LifeLog struct {
 
 	UserID     uint64    `gorm:"index:idx_user_date;type:bigint unsigned"`
 	Content    string    `gorm:"type:text"`
-	Tags       string    `gorm:"type:varchar(500)"`
 	OccurredAt time.Time `gorm:"index:idx_user_date;type:datetime"`
 }
 

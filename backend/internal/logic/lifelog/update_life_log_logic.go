@@ -57,9 +57,6 @@ func (l *UpdateLifeLogLogic) UpdateLifeLog(req *types.UpdateLifeLogReq) (resp *t
 		}
 		updates["content"] = strings.TrimSpace(req.Content)
 	}
-	if req.Tags != "" {
-		updates["tags"] = strings.TrimSpace(req.Tags)
-	}
 	if req.OccurredAt != "" {
 		occurredAt, err := time.ParseInLocation(time.DateTime, req.OccurredAt, constvar.TimeLocation)
 		if err != nil {
@@ -68,13 +65,29 @@ func (l *UpdateLifeLogLogic) UpdateLifeLog(req *types.UpdateLifeLogReq) (resp *t
 		updates["occurred_at"] = occurredAt
 	}
 
-	if len(updates) == 0 {
-		return &types.Response{}, nil
+	// 如果传了 tags，替换标签关联
+	if req.Tags != nil {
+		tagIDs, err := resolveTags(l.ctx, l.svcCtx, req.Tags)
+		if err != nil {
+			return nil, err
+		}
+		if err := l.svcCtx.Repos.Tag.DeleteByLifeLogID(l.ctx, req.ID); err != nil {
+			l.Errorf("delete old tags failed: %v", err)
+			return nil, errorx.WrapDBDelete("删除旧标签关联失败", err)
+		}
+		if len(tagIDs) > 0 {
+			if err := l.svcCtx.Repos.Tag.BatchLink(l.ctx, req.ID, tagIDs); err != nil {
+				l.Errorf("link tags failed: %v", err)
+				return nil, errorx.WrapDBInsert("关联标签失败", err)
+			}
+		}
 	}
 
-	if err := l.svcCtx.Repos.LifeLog.Update(l.ctx, req.ID, updates); err != nil {
-		l.Errorf("update life log failed: %v", err)
-		return nil, errorx.WrapDBUpdate("更新生活记录失败", err)
+	if len(updates) > 0 {
+		if err := l.svcCtx.Repos.LifeLog.Update(l.ctx, req.ID, updates); err != nil {
+			l.Errorf("update life log failed: %v", err)
+			return nil, errorx.WrapDBUpdate("更新生活记录失败", err)
+		}
 	}
 
 	return &types.Response{}, nil
