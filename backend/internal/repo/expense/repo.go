@@ -213,9 +213,9 @@ func (r *repo) CountLogsByCategory(ctx context.Context, categoryID uint64, tx ..
 func (r *repo) SumByDay(ctx context.Context, userID uint64, start, end time.Time, tx ...*gorm.DB) ([]DayTotal, error) {
 	var results []DayTotal
 	err := r.getDB(ctx, tx...).Model(&Log{}).
-		Select("DATE(occurred_at) as date, COALESCE(SUM(amount), 0) as total").
+		Select("DATE_FORMAT(occurred_at, '%Y-%m-%d') as date, COALESCE(SUM(amount), 0) as total").
 		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ? AND status = 0", userID, start, end).
-		Group("DATE(occurred_at)").
+		Group("DATE_FORMAT(occurred_at, '%Y-%m-%d')").
 		Order("date ASC").
 		Scan(&results).Error
 	return results, err

@@ -12,6 +12,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 )
 
 type DeleteLifeLogLogic struct {
@@ -47,15 +48,19 @@ func (l *DeleteLifeLogLogic) DeleteLifeLog(req *types.DeleteLifeLogReq) (resp *t
 		return nil, errorx.ErrForbidden
 	}
 
-	// todo 事务 先删除标签关联，再删生活记录
-	if err := l.svcCtx.Repos.Tag.DeleteByLifeLogID(l.ctx, req.ID); err != nil {
-		l.Errorf("delete life log tags failed: %v", err)
-		return nil, errorx.WrapDBDelete("删除标签关联失败", err)
-	}
+	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
+		if err := l.svcCtx.Repos.Tag.DeleteByLifeLogID(l.ctx, req.ID, tx); err != nil {
+			l.Errorf("delete life log tags failed: %v", err)
+			return errorx.WrapDBDelete("删除标签关联失败", err)
+		}
 
-	if err := l.svcCtx.Repos.LifeLog.Delete(l.ctx, req.ID); err != nil {
-		l.Errorf("delete life log failed: %v", err)
-		return nil, errorx.WrapDBDelete("删除生活记录失败", err)
+		if err := l.svcCtx.Repos.LifeLog.Delete(l.ctx, req.ID, tx); err != nil {
+			l.Errorf("delete life log failed: %v", err)
+			return errorx.WrapDBDelete("删除生活记录失败", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return &types.Response{}, nil

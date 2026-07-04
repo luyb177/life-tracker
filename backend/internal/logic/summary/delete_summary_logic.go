@@ -12,6 +12,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 )
 
 type DeleteSummaryLogic struct {
@@ -46,15 +47,19 @@ func (l *DeleteSummaryLogic) DeleteSummary(req *types.DeleteSummaryReq) (*types.
 		return nil, errorx.ErrForbidden
 	}
 
-	// 先删除标签关联，再删总结
-	if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID); err != nil {
-		l.Errorf("delete summary tags failed: %v", err)
-		return nil, errorx.WrapDBDelete("删除标签关联失败", err)
-	}
+	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
+		if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID, tx); err != nil {
+			l.Errorf("delete summary tags failed: %v", err)
+			return errorx.WrapDBDelete("删除标签关联失败", err)
+		}
 
-	if err := l.svcCtx.Repos.Summary.Delete(l.ctx, req.ID); err != nil {
-		l.Errorf("delete summary failed: %v", err)
-		return nil, errorx.WrapDBDelete("删除总结失败", err)
+		if err := l.svcCtx.Repos.Summary.Delete(l.ctx, req.ID, tx); err != nil {
+			l.Errorf("delete summary failed: %v", err)
+			return errorx.WrapDBDelete("删除总结失败", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return &types.Response{}, nil

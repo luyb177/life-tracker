@@ -60,11 +60,12 @@ Both share the same `ServiceContext` and config file.
 
 ## Key Design Decisions
 
-### Summary is the unified record layer
+### Life logs and summaries are separate layers
 
-There is **no separate `life_logs` table**. The `summaries` table serves double duty:
-- `source=2` (user): manual daily journals / activity records. Multiple per day are allowed.
-- `source=1` (AI): auto-generated periodic summaries. One per user+period_type+period_start.
+Daily activity records live in the `life_logs` table and are exposed through `/api/v1/life_log/*`.
+The `summaries` table is only for periodic review content:
+- `source=2` (user): manual period summaries. The current backend allows one user summary per user+period_type+period_start.
+- `source=1` (AI): auto-generated period summaries. One AI summary per user+period_type+period_start.
 
 ### Summary period model
 

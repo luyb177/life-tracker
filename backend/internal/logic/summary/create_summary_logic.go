@@ -16,6 +16,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 )
 
 type CreateSummaryLogic struct {
@@ -75,13 +76,17 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
 	}
 
-	if err := l.svcCtx.Repos.Summary.Create(l.ctx, s); err != nil {
-		l.Errorf("create summary failed: %v", err)
-		return nil, errorx.WrapDBInsert("创建总结失败", err)
-	}
+	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
+		if err := l.svcCtx.Repos.Summary.Create(l.ctx, s, tx); err != nil {
+			l.Errorf("create summary failed: %v", err)
+			return errorx.WrapDBInsert("创建总结失败", err)
+		}
 
-	// 关联标签
-	if err := resolveSummaryTags(l.ctx, l.svcCtx, s.ID, req.Tags); err != nil {
+		if err := resolveSummaryTags(l.ctx, l.svcCtx, s.ID, req.Tags, tx); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/repo/summary"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 	"github.com/luyb177/life-tracker/backend/internal/types"
+	"gorm.io/gorm"
 )
 
 var reDay = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -86,20 +87,20 @@ func periodStartHint(t uint8) string {
 }
 
 // resolveSummaryTags 解析标签列表并关联到 summary
-func resolveSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summaryID uint64, tags []types.TagInfo) error {
+func resolveSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summaryID uint64, tags []types.TagInfo, tx ...*gorm.DB) error {
 	if len(tags) == 0 {
 		return nil
 	}
 	tagIDs := make([]uint64, 0, len(tags))
 	for _, t := range tags {
 		if t.ID == 0 {
-			tag, err := svcCtx.Repos.Tag.FindOrCreate(ctx, t.Name)
+			tag, err := svcCtx.Repos.Tag.FindOrCreate(ctx, t.Name, tx...)
 			if err != nil {
 				return errorx.WrapDBInsert("创建标签失败", err)
 			}
 			tagIDs = append(tagIDs, tag.ID)
 		} else {
-			tag, err := svcCtx.Repos.Tag.FindByID(ctx, t.ID)
+			tag, err := svcCtx.Repos.Tag.FindByID(ctx, t.ID, tx...)
 			if err != nil {
 				return errorx.WrapDBQuery("查询标签失败", err)
 			}
@@ -109,7 +110,7 @@ func resolveSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summary
 			tagIDs = append(tagIDs, tag.ID)
 		}
 	}
-	return svcCtx.Repos.Tag.BatchLinkSummary(ctx, summaryID, tagIDs)
+	return svcCtx.Repos.Tag.BatchLinkSummary(ctx, summaryID, tagIDs, tx...)
 }
 
 // batchFillSummaryTags 批量填充 summary 的标签

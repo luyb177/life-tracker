@@ -13,6 +13,7 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 )
 
 type UpdateSummaryLogic struct {
@@ -58,24 +59,31 @@ func (l *UpdateSummaryLogic) UpdateSummary(req *types.UpdateSummaryReq) (*types.
 		updates["title"] = strings.TrimSpace(req.Title)
 	}
 
-	// 标签替换
-	if req.Tags != nil {
-		if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID); err != nil {
-			l.Errorf("delete old tags failed: %v", err)
-			return nil, errorx.WrapDBDelete("删除旧标签关联失败", err)
-		}
-		if err := resolveSummaryTags(l.ctx, l.svcCtx, req.ID, req.Tags); err != nil {
-			return nil, err
-		}
-	}
-
 	if len(updates) == 0 && req.Tags == nil {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)
 	}
 
-	if err := l.svcCtx.Repos.Summary.Update(l.ctx, req.ID, updates); err != nil {
-		l.Errorf("update summary failed: %v", err)
-		return nil, errorx.WrapDBUpdate("更新总结失败", err)
+	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
+		// 标签替换
+		if req.Tags != nil {
+			if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID, tx); err != nil {
+				l.Errorf("delete old tags failed: %v", err)
+				return errorx.WrapDBDelete("删除旧标签关联失败", err)
+			}
+			if err := resolveSummaryTags(l.ctx, l.svcCtx, req.ID, req.Tags, tx); err != nil {
+				return err
+			}
+		}
+
+		if len(updates) > 0 {
+			if err := l.svcCtx.Repos.Summary.Update(l.ctx, req.ID, updates, tx); err != nil {
+				l.Errorf("update summary failed: %v", err)
+				return errorx.WrapDBUpdate("更新总结失败", err)
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return &types.Response{}, nil
