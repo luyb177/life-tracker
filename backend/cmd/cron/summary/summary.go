@@ -58,8 +58,6 @@ func labelCN(t uint8) string {
 		return "月报"
 	case constvar.SummaryPeriodTypeYear:
 		return "年报"
-	case constvar.SummaryPeriodTypeLife:
-		return "人生总结"
 	default:
 		return "总结"
 	}

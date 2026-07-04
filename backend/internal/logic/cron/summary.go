@@ -3,7 +3,6 @@ package summary
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -43,11 +42,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 	// 2.5 获取用户日报（生活记录）
 	journalText := buildJournalContext(ctx, svcCtx, userID, periodStart, periodEnd)
 
-	// 2.6 人生总结额外上下文（标签统计 + 年报聚合）
 	extraContext := ""
-	if periodType == constvar.SummaryPeriodTypeLife {
-		extraContext = buildLifetimeContext(ctx, svcCtx, userID, periodStart, periodEnd)
-	}
 
 	// 3. 构建 Prompt
 	label := periodTypeLabelCN(periodType)
@@ -135,169 +130,6 @@ func buildJournalContext(ctx context.Context, svcCtx *svc.ServiceContext, userID
 	return sb.String()
 }
 
-type monthlyLifeSignals struct {
-	JournalCount int
-	ExpenseTotal float64
-	TopTags      []string
-}
-
-// buildLifetimeContext 人生总结额外上下文：标签统计 + 长期趋势
-func buildLifetimeContext(ctx context.Context, svcCtx *svc.ServiceContext, userID uint64, start, end time.Time) string {
-	startStr := start.Format("2006-01-02")
-	endStr := end.Format("2006-01-02")
-
-	tags, _ := svcCtx.Repos.Summary.ListTagsByDateRange(ctx, userID, startStr, endStr)
-	tagPeriods, _ := svcCtx.Repos.Summary.ListTagPeriods(ctx, userID, startStr, endStr)
-	journals, _ := svcCtx.Repos.Summary.FindByPeriodRangeAndSource(ctx, userID, constvar.SummaryPeriodTypeDay, startStr, endStr, constvar.SummarySourceUser)
-	expenseMonths, _ := svcCtx.Repos.Expense.SumByMonth(ctx, userID, start, end)
-
-	countMap, totalTags := accumulateTagCounts(tags)
-	if len(countMap) == 0 && len(journals) == 0 && len(expenseMonths) == 0 {
-		return ""
-	}
-
-	type kv struct {
-		tag   string
-		count int64
-	}
-	var sorted []kv
-	for t, c := range countMap {
-		sorted = append(sorted, kv{t, c})
-	}
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i].count > sorted[j].count })
-
-	var sb strings.Builder
-	if len(sorted) > 0 && totalTags > 0 {
-		sb.WriteString("\n【长期标签偏好】\n")
-		for _, kv := range sorted {
-			pct := float64(kv.count) / float64(totalTags) * 100
-			sb.WriteString(fmt.Sprintf("  %s：%d 次 (%.1f%%)\n", kv.tag, kv.count, pct))
-		}
-	}
-
-	monthlySignals := buildMonthlyLifeSignals(journals, tagPeriods, expenseMonths)
-	if monthlyTrend := formatMonthlyLifeSignals(monthlySignals); monthlyTrend != "" {
-		sb.WriteString("\n【长期行为趋势】\n")
-		sb.WriteString(monthlyTrend)
-	}
-
-	return sb.String()
-}
-
-func accumulateTagCounts(tagStrings []string) (map[string]int64, int64) {
-	countMap := make(map[string]int64)
-	var total int64
-	for _, tagStr := range tagStrings {
-		for _, tag := range strings.Split(tagStr, ",") {
-			tag = strings.TrimSpace(tag)
-			if tag == "" {
-				continue
-			}
-			countMap[tag]++
-			total++
-		}
-	}
-	return countMap, total
-}
-
-func buildMonthlyLifeSignals(journals []*summary.Summary, tagPeriods []summary.TagPeriod, expenseMonths []expenseRepo.MonthTotal) map[string]*monthlyLifeSignals {
-	monthly := make(map[string]*monthlyLifeSignals)
-	for _, journal := range journals {
-		month := monthKeyFromDate(journal.PeriodStart)
-		if month == "" {
-			continue
-		}
-		if monthly[month] == nil {
-			monthly[month] = &monthlyLifeSignals{}
-		}
-		monthly[month].JournalCount++
-	}
-
-	for _, monthTotal := range expenseMonths {
-		if monthly[monthTotal.Month] == nil {
-			monthly[monthTotal.Month] = &monthlyLifeSignals{}
-		}
-		monthly[monthTotal.Month].ExpenseTotal = monthTotal.Total
-	}
-
-	for _, period := range tagPeriods {
-		if monthly[period.Month] == nil {
-			monthly[period.Month] = &monthlyLifeSignals{}
-		}
-		countMap, _ := accumulateTagCounts([]string{period.Tags})
-		for tag, count := range countMap {
-			for i := int64(0); i < count; i++ {
-				monthly[period.Month].TopTags = append(monthly[period.Month].TopTags, tag)
-			}
-		}
-	}
-
-	for month, signal := range monthly {
-		if len(signal.TopTags) == 0 {
-			continue
-		}
-		tagCounts, _ := accumulateTagCounts([]string{strings.Join(signal.TopTags, ",")})
-		type kv struct {
-			tag   string
-			count int64
-		}
-		var sorted []kv
-		for tag, count := range tagCounts {
-			sorted = append(sorted, kv{tag: tag, count: count})
-		}
-		sort.Slice(sorted, func(i, j int) bool { return sorted[i].count > sorted[j].count })
-		limit := minInt(3, len(sorted))
-		topTags := make([]string, 0, limit)
-		for i := 0; i < limit; i++ {
-			topTags = append(topTags, fmt.Sprintf("%s(%d)", sorted[i].tag, sorted[i].count))
-		}
-		monthly[month].TopTags = topTags
-	}
-
-	return monthly
-}
-
-func formatMonthlyLifeSignals(monthly map[string]*monthlyLifeSignals) string {
-	if len(monthly) == 0 {
-		return ""
-	}
-
-	var months []string
-	for month := range monthly {
-		months = append(months, month)
-	}
-	sort.Strings(months)
-	if len(months) > 12 {
-		months = months[len(months)-12:]
-	}
-
-	var sb strings.Builder
-	for _, month := range months {
-		signal := monthly[month]
-		sb.WriteString(fmt.Sprintf("  %s：记录 %d 条，支出 %.2f 元", month, signal.JournalCount, signal.ExpenseTotal))
-		if len(signal.TopTags) > 0 {
-			sb.WriteString("，高频标签：")
-			sb.WriteString(strings.Join(signal.TopTags, "、"))
-		}
-		sb.WriteByte('\n')
-	}
-	return sb.String()
-}
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func monthKeyFromDate(date string) string {
-	if len(date) < 7 {
-		return ""
-	}
-	return date[:7]
-}
-
 // buildContext 构建下级总结上下文
 // 日报无需上下文；周报聚合日报；月报聚合周报；年报聚合月报
 func buildContext(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, userID uint64, start, end time.Time) string {
@@ -349,9 +181,6 @@ func calcPeriod(periodType uint8) (start, end time.Time) {
 		thisYearFirst := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
 		start = thisYearFirst.AddDate(-1, 0, 0) // 去年 1 月 1 号
 		end = thisYearFirst
-	case constvar.SummaryPeriodTypeLife:
-		start = time.Date(2000, 1, 1, 0, 0, 0, 0, now.Location())
-		end = now
 	}
 	return
 }
@@ -368,14 +197,12 @@ func calcPeriodEnd(periodType uint8, start time.Time) time.Time {
 		return start.AddDate(0, 1, 0)
 	case constvar.SummaryPeriodTypeYear:
 		return start.AddDate(1, 0, 0)
-	case constvar.SummaryPeriodTypeLife:
-		return time.Now()
 	default:
 		return start.AddDate(0, 0, 1)
 	}
 }
 
-// childPeriodType 返回下级周期类型（周报的下级是日报，月报的下级是周报，年报的下级是月报，人生总结的下级是年报）
+// childPeriodType 返回下级周期类型（周报的下级是日报，月报的下级是周报，年报的下级是月报）
 func childPeriodType(t uint8) uint8 {
 	switch t {
 	case constvar.SummaryPeriodTypeWeek:
@@ -384,8 +211,6 @@ func childPeriodType(t uint8) uint8 {
 		return constvar.SummaryPeriodTypeWeek
 	case constvar.SummaryPeriodTypeYear:
 		return constvar.SummaryPeriodTypeMonth
-	case constvar.SummaryPeriodTypeLife:
-		return constvar.SummaryPeriodTypeYear
 	default:
 		return 0
 	}
@@ -412,8 +237,6 @@ func periodTypeLabelCN(t uint8) string {
 		return "月报"
 	case constvar.SummaryPeriodTypeYear:
 		return "年报"
-	case constvar.SummaryPeriodTypeLife:
-		return "人生总结"
 	default:
 		return "总结"
 	}

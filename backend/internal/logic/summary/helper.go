@@ -15,8 +15,7 @@ func validPeriodType(t uint8) bool {
 	case constvar.SummaryPeriodTypeDay,
 		constvar.SummaryPeriodTypeWeek,
 		constvar.SummaryPeriodTypeMonth,
-		constvar.SummaryPeriodTypeYear,
-		constvar.SummaryPeriodTypeLife:
+		constvar.SummaryPeriodTypeYear:
 		return true
 	default:
 		return false
@@ -58,8 +57,6 @@ func normalizePeriodStart(periodType uint8, start string) (time.Time, error) {
 			return time.Time{}, fmt.Errorf("年报的 period_start 必须是每年 1 月 1 日")
 		}
 		return startAt, nil
-	case constvar.SummaryPeriodTypeLife:
-		return startAt, nil
 	default:
 		return time.Time{}, fmt.Errorf("无效的周期类型")
 	}
@@ -95,8 +92,6 @@ func normalizePeriodRange(periodType uint8, start, end string) (time.Time, time.
 		if !endAt.Equal(startAt.AddDate(1, 0, 0)) {
 			return time.Time{}, time.Time{}, fmt.Errorf("年报必须满足 period_end = 下一年 1 月 1 日")
 		}
-	case constvar.SummaryPeriodTypeLife:
-		// 人生总结允许用户自定义时间范围，只要求 end > start。
 	default:
 		return time.Time{}, time.Time{}, fmt.Errorf("无效的周期类型")
 	}
@@ -114,8 +109,6 @@ func periodTypeLabel(t uint8) string {
 		return "月报"
 	case constvar.SummaryPeriodTypeYear:
 		return "年报"
-	case constvar.SummaryPeriodTypeLife:
-		return "人生总结"
 	default:
 		return "总结"
 	}

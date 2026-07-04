@@ -21,7 +21,7 @@ type Config struct {
 type AIConf struct {
 	Endpoint string // DeepSeek API endpoint
 	APIKey   string
-	Model    string // 默认 deepseek-chat
+	Model    string // 默认 deepseek-v4-pro
 }
 
 type IP2RegionConf struct {
@@ -38,7 +38,7 @@ type EmailConf struct {
 
 type JWTConf struct {
 	Secret         string
-	ExpireS        int64 // access token 过期时间，单位：秒，默认 900（15min）
+	ExpireS        int64 // access token 过期时间，单位：秒，默认 7200（2h）
 	RefreshExpireS int64 // refresh token 过期时间，单位：秒，默认 604800（7d）
 }
 

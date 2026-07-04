@@ -6,7 +6,6 @@ const (
 	SummaryPeriodTypeWeek  uint8 = 2 // 周报
 	SummaryPeriodTypeMonth uint8 = 3 // 月报
 	SummaryPeriodTypeYear  uint8 = 4 // 年报
-	SummaryPeriodTypeLife  uint8 = 5 // 人生总结
 )
 
 // 总结来源
