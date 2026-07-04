@@ -30,12 +30,14 @@ type Log struct {
 	UpdatedAt time.Time
 	DeletedAt soft_delete.DeletedAt `gorm:"softDelete:nano;type:bigint unsigned"`
 
-	UserID     uint64    `gorm:"index:idx_user_date;type:bigint unsigned"`
-	CategoryID uint64    `gorm:"index;type:bigint unsigned"`
-	Amount     int64     `gorm:"type:bigint"` // 单位：分
-	Note       string    `gorm:"type:varchar(255)"`
-	Location   string    `gorm:"type:varchar(255)"`
-	OccurredAt time.Time `gorm:"index:idx_user_date;type:datetime"`
+	UserID     uint64     `gorm:"index:idx_user_date;type:bigint unsigned"`
+	CategoryID uint64     `gorm:"index;type:bigint unsigned"`
+	Amount     int64      `gorm:"type:bigint"` // 单位：分
+	Note       string     `gorm:"type:varchar(255)"`
+	Location   string     `gorm:"type:varchar(255)"`
+	OccurredAt time.Time  `gorm:"index:idx_user_date;type:datetime"`
+	Status     uint8      `gorm:"type:tinyint unsigned;default:0"` // 0=正常, 1=已退款
+	RefundedAt *time.Time `gorm:"type:datetime"`                   // 退款时间
 }
 
 func (Log) TableName() string {

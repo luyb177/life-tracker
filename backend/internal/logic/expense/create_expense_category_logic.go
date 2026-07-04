@@ -45,6 +45,7 @@ func (l *CreateExpenseCategoryLogic) CreateExpenseCategory(req *types.CreateExpe
 		return nil, errorx.WrapBadRequest("分类名称过长", nil)
 	}
 
+	// todo 这里可以将name传递进去直接得到结果
 	// 检查是否已存在同名分类（含系统默认）
 	existing, err := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
 	if err != nil {

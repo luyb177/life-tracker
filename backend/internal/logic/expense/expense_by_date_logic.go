@@ -71,6 +71,8 @@ func (l *ExpenseByDateLogic) ExpenseByDate(req *types.ExpenseByDateReq) (*types.
 			Note:       log.Note,
 			Location:   log.Location,
 			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
+			Status:     log.Status,
+			RefundedAt: formatTimePtr(log.RefundedAt, constvar.TimeLocation),
 			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
 		})
 	}

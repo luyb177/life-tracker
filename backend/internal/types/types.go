@@ -83,6 +83,8 @@ type ExpenseLogInfo struct {
 	Note       string              `json:"note"`
 	Location   string              `json:"location,optional"`
 	OccurredAt string              `json:"occurred_at"`
+	Status     uint8               `json:"status"` // 0=正常, 1=已退款
+	RefundedAt string              `json:"refunded_at,optional"`
 	CreatedAt  string              `json:"created_at"`
 }
 
@@ -92,10 +94,6 @@ type ExpenseMonthlyTrendResp struct {
 
 type ExpenseStatsCategoryResp struct {
 	Categories []ExpenseCategoryStat `json:"categories"`
-}
-
-type ExpenseStatsRangeResp struct {
-	Total int64 `json:"total"` // 单位：分
 }
 
 type ExpenseStatsReq struct {
@@ -207,6 +205,10 @@ type MonthTotal struct {
 type PageToken struct {
 	ID        uint64 `json:"id"`
 	CreatedAt string `json:"created_at"`
+}
+
+type RefundExpenseLogReq struct {
+	ID uint64 `json:"id"`
 }
 
 type RefreshTokenReq struct {

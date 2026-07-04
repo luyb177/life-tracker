@@ -109,12 +109,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: expense.ExpenseMonthlyTrendHandler(serverCtx),
 				},
 				{
-					// 区间支出总额
-					Method:  http.MethodGet,
-					Path:    "/stats/range",
-					Handler: expense.ExpenseStatsRangeHandler(serverCtx),
-				},
-				{
 					// 每日支出趋势
 					Method:  http.MethodGet,
 					Path:    "/stats/trend",
@@ -125,6 +119,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPost,
 					Path:    "/update",
 					Handler: expense.UpdateExpenseLogHandler(serverCtx),
+				},
+				{
+					// 退款
+					Method:  http.MethodPost,
+					Path:    "/refund",
+					Handler: expense.RefundExpenseLogHandler(serverCtx),
 				},
 			}...,
 		),

@@ -20,6 +20,7 @@ type Repository interface {
 	UpdateLog(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 	DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	FindLogByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Log, error)
+	RefundLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	ListLogsByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Log, error)
 	// SumByDate 汇总某用户指定日期的总支出（单位：分）
 	SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (int64, error)
@@ -110,6 +111,14 @@ func (r *repo) DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error {
 	return r.getDB(ctx, tx...).Delete(&Log{}, id).Error
 }
 
+func (r *repo) RefundLog(ctx context.Context, id uint64, tx ...*gorm.DB) error {
+	now := time.Now()
+	return r.getDB(ctx, tx...).Model(&Log{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"status":      1,
+		"refunded_at": now,
+	}).Error
+}
+
 func (r *repo) FindLogByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Log, error) {
 	var l Log
 	err := r.getDB(ctx, tx...).Where("id = ?", id).First(&l).Error
@@ -147,7 +156,7 @@ func (r *repo) SumByDate(ctx context.Context, userID uint64, date time.Time, tx 
 	}
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("COALESCE(SUM(amount), 0) as total").
-		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, startOfDay, endOfDay).
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ? AND status = 0", userID, startOfDay, endOfDay).
 		Scan(&result).Error
 	return result.Total, err
 }
@@ -158,7 +167,7 @@ func (r *repo) SumByDateRange(ctx context.Context, userID uint64, start, end tim
 	}
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("COALESCE(SUM(amount), 0) as total").
-		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ? AND status = 0", userID, start, end).
 		Scan(&result).Error
 	return result.Total, err
 }
@@ -177,7 +186,7 @@ func (r *repo) SumByDateRangeGrouped(ctx context.Context, userID uint64, start, 
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("expense_logs.category_id, expense_categories.name as category_name, COALESCE(SUM(expense_logs.amount), 0) as total").
 		Joins("LEFT JOIN expense_categories ON expense_categories.id = expense_logs.category_id AND expense_categories.deleted_at = 0").
-		Where("expense_logs.user_id = ? AND expense_logs.occurred_at >= ? AND expense_logs.occurred_at < ?", userID, start, end).
+		Where("expense_logs.user_id = ? AND expense_logs.occurred_at >= ? AND expense_logs.occurred_at < ? AND expense_logs.status = 0", userID, start, end).
 		Group("expense_logs.category_id, expense_categories.name").
 		Order("total DESC").
 		Scan(&results).Error
@@ -188,7 +197,7 @@ func (r *repo) SumByMonth(ctx context.Context, userID uint64, start, end time.Ti
 	var results []MonthTotal
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("DATE_FORMAT(occurred_at, '%Y-%m') as month, COALESCE(SUM(amount), 0) as total").
-		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ? AND status = 0", userID, start, end).
 		Group("DATE_FORMAT(occurred_at, '%Y-%m')").
 		Order("month ASC").
 		Scan(&results).Error
@@ -205,7 +214,7 @@ func (r *repo) SumByDay(ctx context.Context, userID uint64, start, end time.Time
 	var results []DayTotal
 	err := r.getDB(ctx, tx...).Model(&Log{}).
 		Select("DATE(occurred_at) as date, COALESCE(SUM(amount), 0) as total").
-		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ?", userID, start, end).
+		Where("user_id = ? AND occurred_at >= ? AND occurred_at < ? AND status = 0", userID, start, end).
 		Group("DATE(occurred_at)").
 		Order("date ASC").
 		Scan(&results).Error

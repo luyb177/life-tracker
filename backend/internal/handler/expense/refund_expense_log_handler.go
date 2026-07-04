@@ -1,6 +1,3 @@
-// Code scaffolded by goctl. Safe to edit.
-// goctl 1.10.1
-
 package expense
 
 import (
@@ -14,17 +11,17 @@ import (
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-// 区间支出总额
-func ExpenseStatsRangeHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+// 退款
+func RefundExpenseLogHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.ExpenseStatsReq
+		var req types.RefundExpenseLogReq
 		if err := httpx.Parse(r, &req); err != nil {
 			respx.ErrorCtx(r.Context(), w, errorx.WrapBadRequest("请求参数解析失败", err))
 			return
 		}
 
-		l := expense.NewExpenseStatsRangeLogic(r.Context(), svcCtx)
-		resp, err := l.ExpenseStatsRange(&req)
+		l := expense.NewRefundExpenseLogLogic(r.Context(), svcCtx)
+		resp, err := l.RefundExpenseLog(&req)
 		if err != nil {
 			respx.ErrorCtx(r.Context(), w, err)
 			return

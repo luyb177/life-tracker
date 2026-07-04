@@ -249,10 +249,12 @@ type (
 		ID         uint64              `json:"id"`
 		Category   ExpenseCategoryInfo `json:"category"`
 		Amount     float64             `json:"amount"`
-		Note       string              `json:"note"`
-		Location   string              `json:"location,optional"`
-		OccurredAt string              `json:"occurred_at"`
-		CreatedAt  string              `json:"created_at"`
+		Note       string `json:"note"`
+		Location   string `json:"location,optional"`
+		OccurredAt string `json:"occurred_at"`
+		Status     uint8  `json:"status"` // 0=正常, 1=已退款
+		RefundedAt string `json:"refunded_at,optional"`
+		CreatedAt  string `json:"created_at"`
 	}
 	CreateExpenseCategoryReq {
 		Name string `json:"name"`
@@ -267,6 +269,9 @@ type (
 		OccurredAt string  `json:"occurred_at"`
 	}
 	DeleteExpenseLogReq {
+		ID uint64 `json:"id"`
+	}
+	RefundExpenseLogReq {
 		ID uint64 `json:"id"`
 	}
 	UpdateExpenseLogReq {
