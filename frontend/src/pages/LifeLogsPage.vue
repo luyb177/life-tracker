@@ -1,7 +1,12 @@
 <template>
   <div class="page">
     <PageHeader title="生活记录" description="按日期查看、补充和管理每天发生的事情。">
-      <n-date-picker v-model:formatted-value="date" value-format="yyyy-MM-dd" type="date" />
+      <n-date-picker
+        v-model:formatted-value="date"
+        value-format="yyyy-MM-dd"
+        type="date"
+        :is-date-disabled="isFutureDateTimestamp"
+      />
     </PageHeader>
 
     <section class="panel">
@@ -19,7 +24,7 @@
         description="回到今天页面可以快速补一条。"
         :icon="BookOpenText"
       />
-      <div v-else class="record-list">
+      <div v-else class="record-list life-log-record-list">
         <article v-for="log in logs" :key="log.id" class="record-row">
           <time>{{ log.occurred_at }}</time>
           <p>{{ log.content }}</p>
@@ -40,7 +45,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { getLifeLogsByDate } from '@/api/lifeLog'
 import type { LifeLogInfo } from '@/types/api'
-import { formatDate } from '@/utils/date'
+import { formatDate, isFutureDateTimestamp } from '@/utils/date'
 
 const message = useMessage()
 const date = ref(formatDate())
@@ -61,4 +66,3 @@ async function load() {
 watch(date, load)
 onMounted(load)
 </script>
-

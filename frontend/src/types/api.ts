@@ -84,3 +84,8 @@ export interface TrendPoint {
   date: string
   total: number
 }
+
+export interface MonthTrendPoint {
+  month: string
+  total: number
+}

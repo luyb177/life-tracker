@@ -23,7 +23,13 @@
         :options="categoryOptions"
         placeholder="分类"
         :loading="loadingCategories"
-      />
+      >
+        <template #action>
+          <button type="button" class="select-action" @click="openCategoryModal">
+            + 添加更多分类
+          </button>
+        </template>
+      </n-select>
     </div>
 
     <n-input v-model:value="note" placeholder="备注，可选" />
@@ -31,13 +37,27 @@
     <n-button type="primary" block :loading="loading" :disabled="!canSubmit" @click="submit">
       保存支出
     </n-button>
+
+    <n-modal v-model:show="showCategoryModal" preset="dialog" title="添加支出分类">
+      <n-input
+        v-model:value="categoryName"
+        placeholder="例如：咖啡、打车、吹头发"
+        maxlength="50"
+        show-count
+        @keyup.enter="createCategory"
+      />
+      <template #action>
+        <n-button @click="showCategoryModal = false">取消</n-button>
+        <n-button type="primary" :loading="creatingCategory" @click="createCategory">保存</n-button>
+      </template>
+    </n-modal>
   </n-form>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useMessage } from 'naive-ui'
-import { createExpense, listExpenseCategories } from '@/api/expense'
+import { createExpense, createExpenseCategory, listExpenseCategories } from '@/api/expense'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { yuanToFen } from '@/utils/money'
 import type { ExpenseCategoryInfo } from '@/types/api'
@@ -52,6 +72,9 @@ const note = ref('')
 const timeValue = ref(Date.now())
 const loading = ref(false)
 const loadingCategories = ref(false)
+const creatingCategory = ref(false)
+const showCategoryModal = ref(false)
+const categoryName = ref('')
 const categories = ref<ExpenseCategoryInfo[]>([])
 
 const categoryOptions = computed(() =>
@@ -65,14 +88,38 @@ function buildOccurredAt() {
   return formatDateTime(new Date(`${date}T${time.toTimeString().slice(0, 8)}`))
 }
 
-async function loadCategories() {
+async function loadCategories(preferredName?: string) {
+  const currentCategoryId = categoryId.value
   loadingCategories.value = true
   try {
     const resp = await listExpenseCategories()
     categories.value = resp.categories
-    categoryId.value = resp.categories[0]?.id ?? null
+    const preferred = preferredName
+      ? resp.categories.find((item) => item.name === preferredName)
+      : undefined
+    const currentStillExists = resp.categories.find((item) => item.id === currentCategoryId)
+    categoryId.value = preferred?.id ?? currentStillExists?.id ?? resp.categories[0]?.id ?? null
   } finally {
     loadingCategories.value = false
+  }
+}
+
+function openCategoryModal() {
+  categoryName.value = ''
+  showCategoryModal.value = true
+}
+
+async function createCategory() {
+  const name = categoryName.value.trim()
+  if (!name) return
+  creatingCategory.value = true
+  try {
+    await createExpenseCategory(name)
+    await loadCategories(name)
+    showCategoryModal.value = false
+    message.success('分类已添加')
+  } finally {
+    creatingCategory.value = false
   }
 }
 
@@ -97,4 +144,3 @@ async function submit() {
 
 onMounted(loadCategories)
 </script>
-

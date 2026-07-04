@@ -5,6 +5,7 @@ import type {
   ExpenseCategoryInfo,
   ExpenseLogInfo,
   IDResponse,
+  MonthTrendPoint,
   TrendPoint
 } from '@/types/api'
 
@@ -23,6 +24,14 @@ export function listExpenseCategories() {
   return unwrap<{ categories: ExpenseCategoryInfo[] }>(http.get('/expense/categories'))
 }
 
+export function createExpenseCategory(name: string) {
+  return unwrap<Record<string, never>>(http.post('/expense/category/create', { name }))
+}
+
+export function refundExpense(id: number) {
+  return unwrap<Record<string, never>>(http.post('/expense/refund', { id }))
+}
+
 export function getExpensesByDate(date: string) {
   return unwrap<{ list: ExpenseLogInfo[]; total: number }>(
     http.get('/expense/by_date', { params: { date } })
@@ -39,4 +48,8 @@ export function getCategoryStats(params: { start: string; end: string }) {
 
 export function getTrendStats(params: { start: string; end: string }) {
   return unwrap<{ points: TrendPoint[] }>(http.get('/expense/stats/trend', { params }))
+}
+
+export function getMonthlyTrendStats(params: { start: string; end: string }) {
+  return unwrap<{ points: MonthTrendPoint[] }>(http.get('/expense/stats/monthly', { params }))
 }

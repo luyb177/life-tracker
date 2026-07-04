@@ -53,6 +53,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(USER_KEY)
   }
 
-  return { token, refreshToken, user, isLoggedIn, login, refresh, logout }
-})
+  function patchUserInfo(payload: Partial<UserInfo>) {
+    if (!user.value) return
+    user.value = { ...user.value, ...payload }
+    localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+  }
 
+  return { token, refreshToken, user, isLoggedIn, login, refresh, logout, patchUserInfo }
+})

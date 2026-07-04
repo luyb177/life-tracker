@@ -26,6 +26,19 @@
       >
         {{ tag }}
       </button>
+      <button v-if="!addingTag" type="button" class="chip add-chip" @click="addingTag = true">
+        + 标签
+      </button>
+      <n-input
+        v-else
+        ref="tagInputRef"
+        v-model:value="customTag"
+        class="inline-tag-input"
+        size="small"
+        placeholder="输入标签"
+        @keyup.enter="addCustomTag"
+        @blur="addCustomTag"
+      />
     </div>
 
     <n-button type="primary" block :loading="loading" :disabled="!content.trim()" @click="submit">
@@ -35,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { useMessage } from 'naive-ui'
 import { createLifeLog } from '@/api/lifeLog'
 import { formatDate, formatDateTime } from '@/utils/date'
@@ -47,8 +60,23 @@ const message = useMessage()
 const content = ref('')
 const loading = ref(false)
 const timeValue = ref(Date.now())
-const presetTags = ['工作', '学习', '运动', '娱乐', '睡眠']
+const defaultTags = ['工作', '学习', '运动', '娱乐', '睡眠']
+const presetTags = ref(readTags())
 const selectedTags = ref<string[]>([])
+const addingTag = ref(false)
+const customTag = ref('')
+const tagInputRef = ref<{ focus: () => void } | null>(null)
+
+function readTags() {
+  const raw = localStorage.getItem('life-tracker.life-tags')
+  if (!raw) return defaultTags
+  try {
+    const saved = JSON.parse(raw) as string[]
+    return Array.from(new Set([...defaultTags, ...saved])).filter(Boolean)
+  } catch {
+    return defaultTags
+  }
+}
 
 function toggleTag(tag: string) {
   selectedTags.value = selectedTags.value.includes(tag)
@@ -56,11 +84,34 @@ function toggleTag(tag: string) {
     : [...selectedTags.value, tag]
 }
 
+async function addCustomTag() {
+  const tag = customTag.value.trim()
+  if (!tag) {
+    addingTag.value = false
+    return
+  }
+  if (!presetTags.value.includes(tag)) {
+    presetTags.value = [...presetTags.value, tag]
+    localStorage.setItem('life-tracker.life-tags', JSON.stringify(presetTags.value))
+  }
+  if (!selectedTags.value.includes(tag)) {
+    selectedTags.value = [...selectedTags.value, tag]
+  }
+  customTag.value = ''
+  addingTag.value = false
+}
+
 function buildOccurredAt() {
   const date = props.date || formatDate()
   const time = new Date(timeValue.value)
   return formatDateTime(new Date(`${date}T${time.toTimeString().slice(0, 8)}`))
 }
+
+watch(addingTag, async (value) => {
+  if (!value) return
+  await nextTick()
+  tagInputRef.value?.focus()
+})
 
 async function submit() {
   if (!content.value.trim()) return
@@ -80,4 +131,3 @@ async function submit() {
   }
 }
 </script>
-

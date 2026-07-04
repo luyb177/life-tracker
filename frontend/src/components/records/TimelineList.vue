@@ -15,13 +15,25 @@
       :icon="Clock3"
     />
 
-    <div v-else class="timeline">
-      <article v-for="item in items" :key="item.id" class="timeline-item" :class="item.type">
+    <div v-else class="timeline today-timeline-list">
+      <article v-for="item in items" :key="item.id" class="timeline-item" :class="[item.type, { refunded: item.refunded }]">
         <div class="timeline-time">{{ item.time }}</div>
         <div>
           <div class="timeline-title-row">
             <strong>{{ item.title }}</strong>
-            <span v-if="item.amount" class="timeline-amount">{{ item.amount }}</span>
+            <div class="timeline-side">
+              <span v-if="item.amount" class="timeline-amount">{{ item.amount }}</span>
+              <span v-if="item.refunded" class="status-badge">已退款</span>
+              <n-button
+                v-else-if="item.canRefund"
+                size="tiny"
+                tertiary
+                type="error"
+                @click="$emit('refund', item.sequence)"
+              >
+                退款
+              </n-button>
+            </div>
           </div>
           <p>{{ item.description }}</p>
           <div v-if="item.tags?.length" class="tag-row compact">
@@ -41,12 +53,17 @@ export interface TimelineItem {
   id: string
   type: 'life' | 'expense'
   time: string
+  sortAt: string
+  createdAt: string
+  sequence: number
   title: string
   description: string
   amount?: string
+  canRefund?: boolean
+  refunded?: boolean
   tags?: string[]
 }
 
 defineProps<{ items: TimelineItem[] }>()
+defineEmits<{ refund: [id: number] }>()
 </script>
-

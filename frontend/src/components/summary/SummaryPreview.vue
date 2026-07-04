@@ -18,18 +18,22 @@
     />
     <div v-else class="summary-content">
       <strong>{{ summary.title || '今日复盘' }}</strong>
-      <p>{{ summary.summary_content }}</p>
-      <p v-if="summary.suggestion_content" class="suggestion">{{ summary.suggestion_content }}</p>
+      <div class="markdown-body" v-html="summaryHtml" />
+      <div v-if="suggestionHtml" class="markdown-body suggestion" v-html="suggestionHtml" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Sparkles } from '@lucide/vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { SummaryInfo } from '@/types/api'
+import { renderMarkdown } from '@/utils/markdown'
 
-defineProps<{ summary?: SummaryInfo | null; loading?: boolean }>()
+const props = defineProps<{ summary?: SummaryInfo | null; loading?: boolean }>()
 defineEmits<{ generate: [] }>()
-</script>
 
+const summaryHtml = computed(() => renderMarkdown(props.summary?.summary_content || ''))
+const suggestionHtml = computed(() => renderMarkdown(props.summary?.suggestion_content || ''))
+</script>
