@@ -6,7 +6,7 @@
 #
 # 服务说明：
 #   life-tracker           主 API 服务（端口 8888）
-#   life-tracker-scheduler  定时调度（日报 8:00 / 周报 周一 8:00 / 月报 1号 8:00 / 年报 1/1 8:00）
+#   life-tracker-scheduler  定时调度（日报 8:00 / 周报 周一 8:00 / 月报 1号 8:00 / 年报 1月1日 8:00）
 #   life-tracker-cron       手动触发定时任务（profile: cron，按需运行）
 #
 # 部署前准备：
@@ -58,11 +58,10 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        echo "0 8 * * * cd /app && cron summary -t 1"  > /var/spool/cron/crontabs/root
-        echo "0 8 * * 1 cd /app && cron summary -t 2" >> /var/spool/cron/crontabs/root
-        echo "0 8 1 * * cd /app && cron summary -t 3" >> /var/spool/cron/crontabs/root
-        echo "0 8 1 1 * cd /app && cron summary -t 4" >> /var/spool/cron/crontabs/root
-        echo "0 9 1 1 * cd /app && cron summary -t 5" >> /var/spool/cron/crontabs/root
+        echo "0 8 * * * cd /app && cron summary -t 1 --config etc/life_tracker.yaml"  > /etc/crontabs/root
+        echo "0 8 * * 1 cd /app && cron summary -t 2 --config etc/life_tracker.yaml" >> /etc/crontabs/root
+        echo "0 8 1 * * cd /app && cron summary -t 3 --config etc/life_tracker.yaml" >> /etc/crontabs/root
+        echo "0 8 1 1 * cd /app && cron summary -t 4 --config etc/life_tracker.yaml" >> /etc/crontabs/root
         exec crond -f -l 2
     volumes:
       - ./etc/life_tracker.yaml:/app/etc/life_tracker.yaml:ro
