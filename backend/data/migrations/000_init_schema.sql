@@ -46,11 +46,11 @@ CREATE TABLE `expense_categories` (
 );
 
 -- 初始化系统默认分类（user_id=0, type=1）
-INSERT IGNORE INTO `expense_categories` (`user_id`, `name`, `type`, `created_at`, `updated_at`) VALUES
-    (0, '早饭', 1, NOW(), NOW()),
-    (0, '午饭', 1, NOW(), NOW()),
-    (0, '晚饭', 1, NOW(), NOW()),
-    (0, '杂项', 1, NOW(), NOW());
+INSERT IGNORE INTO `expense_categories` (`user_id`, `name`, `type`, `created_at`, `updated_at`, `deleted_at`) VALUES
+    (0, '早饭', 1, NOW(), NOW(), 0),
+    (0, '午饭', 1, NOW(), NOW(), 0),
+    (0, '晚饭', 1, NOW(), NOW(), 0),
+    (0, '杂项', 1, NOW(), NOW(), 0);
 
 -- ############################################################################
 -- 3. expense_logs — 支出记录表

@@ -51,22 +51,21 @@ func (l *ExpenseByDateLogic) ExpenseByDate(req *types.ExpenseByDateReq) (*types.
 	}
 
 	// 批量查询分类（含系统默认）
-	categoryMap := make(map[uint64]string)
+	categoryMap := make(map[uint64]types.ExpenseCategoryInfo)
 	categories, _ := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
 	for _, c := range categories {
-		categoryMap[c.ID] = c.Name
+		categoryMap[c.ID] = types.ExpenseCategoryInfo{ID: c.ID, Name: c.Name, Type: c.Type}
 	}
 
 	var total int64
 	items := make([]types.ExpenseLogInfo, 0, len(logs))
 	for _, log := range logs {
-		total += log.Amount
+		if log.Status == 0 {
+			total += log.Amount
+		}
 		items = append(items, types.ExpenseLogInfo{
-			ID: log.ID,
-			Category: types.ExpenseCategoryInfo{
-				ID:   log.CategoryID,
-				Name: categoryMap[log.CategoryID],
-			},
+			ID:         log.ID,
+			Category:   categoryMap[log.CategoryID],
 			Amount:     log.Amount,
 			Note:       log.Note,
 			Location:   log.Location,

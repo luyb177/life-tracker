@@ -72,24 +72,21 @@ func (l *ListExpenseLogLogic) ListExpenseLog(req *types.ListExpenseLogReq) (*typ
 	}
 
 	// 批量查询分类（含系统默认）
-	categoryMap := make(map[uint64]string)
+	categoryMap := make(map[uint64]types.ExpenseCategoryInfo)
 	categories, err := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
 	if err != nil {
 		l.Errorf("find expense categories failed: %v", err)
 		return nil, errorx.WrapDBQuery("查询分类失败", err)
 	}
 	for _, c := range categories {
-		categoryMap[c.ID] = c.Name
+		categoryMap[c.ID] = types.ExpenseCategoryInfo{ID: c.ID, Name: c.Name, Type: c.Type}
 	}
 
 	items := make([]types.ExpenseLogInfo, 0, len(logs))
 	for _, log := range logs {
 		items = append(items, types.ExpenseLogInfo{
-			ID: log.ID,
-			Category: types.ExpenseCategoryInfo{
-				ID:   log.CategoryID,
-				Name: categoryMap[log.CategoryID],
-			},
+			ID:         log.ID,
+			Category:   categoryMap[log.CategoryID],
 			Amount:     log.Amount,
 			Note:       log.Note,
 			Location:   log.Location,
