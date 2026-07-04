@@ -23,7 +23,7 @@ type UpdateLifeLogLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 更新生活记录
+// NewUpdateLifeLogLogic 更新生活记录
 func NewUpdateLifeLogLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateLifeLogLogic {
 	return &UpdateLifeLogLogic{
 		Logger: logx.WithContext(ctx),

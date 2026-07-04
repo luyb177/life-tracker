@@ -25,7 +25,7 @@ type ListLifeLogLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 生活记录列表（游标分页）
+// NewListLifeLogLogic 生活记录列表（游标分页）
 func NewListLifeLogLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListLifeLogLogic {
 	return &ListLifeLogLogic{
 		Logger: logx.WithContext(ctx),

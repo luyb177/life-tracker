@@ -23,7 +23,7 @@ type LifeLogByDateLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 按天查询生活记录
+// NewLifeLogByDateLogic 按天查询生活记录
 func NewLifeLogByDateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LifeLogByDateLogic {
 	return &LifeLogByDateLogic{
 		Logger: logx.WithContext(ctx),

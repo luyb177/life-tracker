@@ -20,7 +20,7 @@ type DeleteLifeLogLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 删除生活记录
+// NewDeleteLifeLogLogic 删除生活记录
 func NewDeleteLifeLogLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteLifeLogLogic {
 	return &DeleteLifeLogLogic{
 		Logger: logx.WithContext(ctx),
@@ -47,7 +47,7 @@ func (l *DeleteLifeLogLogic) DeleteLifeLog(req *types.DeleteLifeLogReq) (resp *t
 		return nil, errorx.ErrForbidden
 	}
 
-	// 先删除标签关联，再删生活记录
+	// todo 事务 先删除标签关联，再删生活记录
 	if err := l.svcCtx.Repos.Tag.DeleteByLifeLogID(l.ctx, req.ID); err != nil {
 		l.Errorf("delete life log tags failed: %v", err)
 		return nil, errorx.WrapDBDelete("删除标签关联失败", err)

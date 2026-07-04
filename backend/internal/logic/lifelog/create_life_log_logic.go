@@ -24,7 +24,7 @@ type CreateLifeLogLogic struct {
 	svcCtx *svc.ServiceContext
 }
 
-// 创建生活记录
+// NewCreateLifeLogLogic 创建生活记录
 func NewCreateLifeLogLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateLifeLogLogic {
 	return &CreateLifeLogLogic{
 		Logger: logx.WithContext(ctx),
@@ -68,7 +68,7 @@ func (l *CreateLifeLogLogic) CreateLifeLog(req *types.CreateLifeLogReq) (resp *t
 		return nil, errorx.WrapDBInsert("创建生活记录失败", err)
 	}
 
-	// 关联标签
+	// todo 可以用异步关联标签
 	if len(tagIDs) > 0 {
 		if err := l.svcCtx.Repos.Tag.BatchLink(l.ctx, log.ID, tagIDs); err != nil {
 			l.Errorf("link tags failed: %v", err)
