@@ -208,11 +208,6 @@ type LoginResp struct {
 	UserInfo     UserInfo `json:"user_info"`
 }
 
-type MonthTagStats struct {
-	Month string     `json:"month"`
-	Tags  []TagCount `json:"tags"`
-}
-
 type MonthTotal struct {
 	Month string  `json:"month"`
 	Total float64 `json:"total"`
@@ -248,14 +243,6 @@ type SendVerificationCodeReq struct {
 	Purpose int32  `json:"purpose"` // 1: registration, 2: password reset
 }
 
-type SummaryDayReq struct {
-	Date string `form:"date"` // "2006-01-02"
-}
-
-type SummaryDayResp struct {
-	List []SummaryInfo `json:"list"`
-}
-
 type SummaryInfo struct {
 	ID                uint64    `json:"id"`
 	PeriodType        uint8     `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
@@ -279,24 +266,6 @@ type SummaryRangeReq struct {
 
 type SummaryRangeResp struct {
 	List []SummaryInfo `json:"list"`
-}
-
-type SummaryTagStatsReq struct {
-	Start string `form:"start"` // "2006-01-02"
-	End   string `form:"end"`   // "2006-01-02"
-}
-
-type SummaryTagStatsResp struct {
-	Tags []TagCount `json:"tags"`
-}
-
-type SummaryTagTrendResp struct {
-	Months []MonthTagStats `json:"months"`
-}
-
-type TagCount struct {
-	Tag   string `json:"tag"`
-	Count int64  `json:"count"`
 }
 
 type TagInfo struct {

@@ -44,27 +44,10 @@ func normalizePeriodStart(periodType uint8, start string) (time.Time, error) {
 		return time.Time{}, err
 	}
 
-	switch periodType {
-	case constvar.SummaryPeriodTypeDay:
-		return startAt, nil
-	case constvar.SummaryPeriodTypeWeek:
-		if startAt.Weekday() != time.Monday {
-			return time.Time{}, fmt.Errorf("周报的 period_start 必须是周一")
-		}
-		return startAt, nil
-	case constvar.SummaryPeriodTypeMonth:
-		if startAt.Day() != 1 {
-			return time.Time{}, fmt.Errorf("月报的 period_start 必须是每月第一天")
-		}
-		return startAt, nil
-	case constvar.SummaryPeriodTypeYear:
-		if startAt.Month() != time.January || startAt.Day() != 1 {
-			return time.Time{}, fmt.Errorf("年报的 period_start 必须是每年 1 月 1 日")
-		}
-		return startAt, nil
-	default:
+	if !validPeriodType(periodType) {
 		return time.Time{}, fmt.Errorf("无效的周期类型")
 	}
+	return startAt, nil
 }
 
 func normalizePeriodRange(periodType uint8, start, end string) (time.Time, time.Time, error) {
@@ -78,27 +61,6 @@ func normalizePeriodRange(periodType uint8, start, end string) (time.Time, time.
 	}
 	if !endAt.After(startAt) {
 		return time.Time{}, time.Time{}, fmt.Errorf("period_end 必须晚于 period_start")
-	}
-
-	switch periodType {
-	case constvar.SummaryPeriodTypeDay:
-		if !endAt.Equal(startAt.AddDate(0, 0, 1)) {
-			return time.Time{}, time.Time{}, fmt.Errorf("日报必须满足 period_end = period_start + 1 天")
-		}
-	case constvar.SummaryPeriodTypeWeek:
-		if !endAt.Equal(startAt.AddDate(0, 0, 7)) {
-			return time.Time{}, time.Time{}, fmt.Errorf("周报必须满足 period_end = period_start + 7 天")
-		}
-	case constvar.SummaryPeriodTypeMonth:
-		if !endAt.Equal(startAt.AddDate(0, 1, 0)) {
-			return time.Time{}, time.Time{}, fmt.Errorf("月报必须满足 period_end = 下月第一天")
-		}
-	case constvar.SummaryPeriodTypeYear:
-		if !endAt.Equal(startAt.AddDate(1, 0, 0)) {
-			return time.Time{}, time.Time{}, fmt.Errorf("年报必须满足 period_end = 下一年 1 月 1 日")
-		}
-	default:
-		return time.Time{}, time.Time{}, fmt.Errorf("无效的周期类型")
 	}
 
 	return startAt, endAt, nil

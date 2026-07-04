@@ -27,21 +27,6 @@ type Repository interface {
 	FindBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) ([]*Tag, error)
 	BatchFindBySummaryIDs(ctx context.Context, summaryIDs []uint64, tx ...*gorm.DB) (map[uint64][]*Tag, error)
 	DeleteBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) error
-	// ListTagFrequencies 按日期范围统计标签频次（替代 strings.Split）
-	ListTagFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagFrequency, error)
-	// ListTagMonthFrequencies 按月份+标签统计（替代 tag_trend）
-	ListTagMonthFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagMonthFrequency, error)
-}
-
-type TagFrequency struct {
-	Tag   string
-	Count int64
-}
-
-type TagMonthFrequency struct {
-	Month string
-	Tag   string
-	Count int64
 }
 
 type repo struct {
@@ -203,32 +188,4 @@ func (r *repo) BatchFindBySummaryIDs(ctx context.Context, summaryIDs []uint64, t
 
 func (r *repo) DeleteBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) error {
 	return r.getDB(ctx, tx...).Where("summary_id = ?", summaryID).Delete(&SummaryTag{}).Error
-}
-
-func (r *repo) ListTagFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagFrequency, error) {
-	var results []TagFrequency
-	err := r.getDB(ctx, tx...).
-		Table("summary_tags").
-		Select("tags.name as tag, COUNT(*) as count").
-		Joins("JOIN tags ON tags.id = summary_tags.tag_id").
-		Joins("JOIN summaries ON summaries.id = summary_tags.summary_id").
-		Where("summaries.user_id = ? AND summaries.period_start >= ? AND summaries.period_start < ?", userID, start, end).
-		Group("tags.name").
-		Order("count DESC").
-		Scan(&results).Error
-	return results, err
-}
-
-func (r *repo) ListTagMonthFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagMonthFrequency, error) {
-	var results []TagMonthFrequency
-	err := r.getDB(ctx, tx...).
-		Table("summary_tags").
-		Select("SUBSTR(summaries.period_start, 1, 7) as month, tags.name as tag, COUNT(*) as count").
-		Joins("JOIN tags ON tags.id = summary_tags.tag_id").
-		Joins("JOIN summaries ON summaries.id = summary_tags.summary_id").
-		Where("summaries.user_id = ? AND summaries.period_start >= ? AND summaries.period_start < ?", userID, start, end).
-		Group("SUBSTR(summaries.period_start, 1, 7), tags.name").
-		Order("month ASC, count DESC").
-		Scan(&results).Error
-	return results, err
 }

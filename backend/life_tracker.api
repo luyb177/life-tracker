@@ -31,9 +31,9 @@ type (
 	}
 	SummaryInfo {
 		ID                uint64    `json:"id"`
-		PeriodType        uint8     `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
-		PeriodStart       string    `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
-		PeriodEnd         string    `json:"period_end"` // 周期结束日期（开区间），统一使用 YYYY-MM-DD
+		PeriodType        uint8     `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+		PeriodStart       string    `json:"period_start"`
+		PeriodEnd         string    `json:"period_end"`
 		Source            uint8     `json:"source"` // 1=AI, 2=用户
 		SummaryContent    string    `json:"summary_content"`
 		SuggestionContent string    `json:"suggestion_content,optional"`
@@ -188,17 +188,11 @@ type (
 		HasMore   bool          `json:"has_more"`
 	}
 	GenerateAISummaryReq {
-		PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
-		PeriodStart string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
+		PeriodType  uint8  `json:"period_type"` // 1=日报, 2=周报, 3=月报, 4=年报
+		PeriodStart string `json:"period_start"`
 	}
 	DeleteSummaryReq {
 		ID uint64 `json:"id"`
-	}
-	SummaryDayReq {
-		Date string `form:"date"` // "2006-01-02"
-	}
-	SummaryDayResp {
-		List []SummaryInfo `json:"list"`
 	}
 	SummaryRangeReq {
 		PeriodType uint8  `form:"period_type,optional"`
@@ -207,24 +201,6 @@ type (
 	}
 	SummaryRangeResp {
 		List []SummaryInfo `json:"list"`
-	}
-	SummaryTagStatsReq {
-		Start string `form:"start"` // "2006-01-02"
-		End   string `form:"end"` // "2006-01-02"
-	}
-	SummaryTagStatsResp {
-		Tags []TagCount `json:"tags"`
-	}
-	TagCount {
-		Tag   string `json:"tag"`
-		Count int64  `json:"count"`
-	}
-	SummaryTagTrendResp {
-		Months []MonthTagStats `json:"months"`
-	}
-	MonthTagStats {
-		Month string     `json:"month"`
-		Tags  []TagCount `json:"tags"`
 	}
 )
 
@@ -255,21 +231,9 @@ service life_tracker {
 	@handler DeleteSummary
 	post /delete (DeleteSummaryReq) returns (Response)
 
-	@doc "查询某天日报（用户+AI）"
-	@handler DaySummary
-	get /day (SummaryDayReq) returns (SummaryDayResp)
-
 	@doc "按时间范围查询总结"
 	@handler RangeSummary
 	get /range (SummaryRangeReq) returns (SummaryRangeResp)
-
-	@doc "标签频次统计"
-	@handler TagStats
-	get /stats/tags (SummaryTagStatsReq) returns (SummaryTagStatsResp)
-
-	@doc "标签按月趋势"
-	@handler TagTrend
-	get /stats/tag_trend (SummaryTagStatsReq) returns (SummaryTagTrendResp)
 }
 
 // ══════════════════════════════════════════════
@@ -434,23 +398,23 @@ service life_tracker {
 // ══════════════════════════════════════════════
 type (
 	LifeLogInfo {
-		ID         uint64 `json:"id"`
-		Content    string `json:"content"`
-		Tags       string `json:"tags,optional"`
-		OccurredAt string `json:"occurred_at"`
-		CreatedAt  string `json:"created_at"`
-		UpdatedAt  string `json:"updated_at"`
+		ID         uint64    `json:"id"`
+		Content    string    `json:"content"`
+		Tags       []TagInfo `json:"tags,optional"`
+		OccurredAt string    `json:"occurred_at"`
+		CreatedAt  string    `json:"created_at"`
+		UpdatedAt  string    `json:"updated_at"`
 	}
 	CreateLifeLogReq {
-		Content    string `json:"content"`
-		Tags       string `json:"tags,optional"`
-		OccurredAt string `json:"occurred_at"`
+		Content    string    `json:"content"`
+		Tags       []TagInfo `json:"tags,optional"`
+		OccurredAt string    `json:"occurred_at"`
 	}
 	UpdateLifeLogReq {
-		ID         uint64 `json:"id"`
-		Content    string `json:"content,optional"`
-		Tags       string `json:"tags,optional"`
-		OccurredAt string `json:"occurred_at,optional"`
+		ID         uint64    `json:"id"`
+		Content    string    `json:"content,optional"`
+		Tags       []TagInfo `json:"tags,optional"`
+		OccurredAt string    `json:"occurred_at,optional"`
 	}
 	DeleteLifeLogReq {
 		ID uint64 `json:"id"`
@@ -459,6 +423,7 @@ type (
 		PageSize  uint32 `form:"page_size"`
 		PageToken string `form:"page_token,optional"`
 		Date      string `form:"date,optional"`
+		TagID     uint64 `form:"tag_id,optional"`
 	}
 	ListLifeLogResp {
 		List      []LifeLogInfo `json:"list"`
@@ -500,4 +465,3 @@ service life_tracker {
 	@handler LifeLogByDate
 	get /by_date (LifeLogByDateReq) returns (LifeLogByDateResp)
 }
-

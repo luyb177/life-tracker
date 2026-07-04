@@ -187,12 +187,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: summary.CreateSummaryHandler(serverCtx),
 				},
 				{
-					// 查询某天日报（用户+AI）
-					Method:  http.MethodGet,
-					Path:    "/day",
-					Handler: summary.DaySummaryHandler(serverCtx),
-				},
-				{
 					// 删除总结
 					Method:  http.MethodPost,
 					Path:    "/delete",
@@ -215,18 +209,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodGet,
 					Path:    "/range",
 					Handler: summary.RangeSummaryHandler(serverCtx),
-				},
-				{
-					// 标签按月趋势
-					Method:  http.MethodGet,
-					Path:    "/stats/tag_trend",
-					Handler: summary.TagTrendHandler(serverCtx),
-				},
-				{
-					// 标签频次统计
-					Method:  http.MethodGet,
-					Path:    "/stats/tags",
-					Handler: summary.TagStatsHandler(serverCtx),
 				},
 				{
 					// 更新总结

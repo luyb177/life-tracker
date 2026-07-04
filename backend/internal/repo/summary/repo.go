@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Repository summary 仓储接口
 type Repository interface {
 	Create(ctx context.Context, s *Summary, tx ...*gorm.DB) error
 	Update(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
@@ -25,8 +26,6 @@ type Repository interface {
 	ListByUser(ctx context.Context, userID uint64, periodType uint8, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Summary, error)
 	Delete(ctx context.Context, id uint64, tx ...*gorm.DB) error
 }
-
-// Repository summary 仓储接口
 
 type repo struct {
 	db *gorm.DB
