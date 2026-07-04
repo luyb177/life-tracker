@@ -5,6 +5,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	auth "github.com/luyb177/life-tracker/backend/internal/handler/auth"
 	expense "github.com/luyb177/life-tracker/backend/internal/handler/expense"
@@ -213,6 +214,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/summary"),
+		rest.WithTimeout(60000*time.Millisecond),
 	)
 
 	server.AddRoutes(

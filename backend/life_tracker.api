@@ -209,6 +209,7 @@ type (
 	group:      summary
 	tags:       "summary"
 	middleware: JWTMiddleware,IPMiddleware
+	timeout:    60s
 )
 service life_tracker {
 	@doc "创建总结（用户手动）"
