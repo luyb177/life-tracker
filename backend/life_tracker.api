@@ -418,3 +418,76 @@ service life_tracker {
 	@handler ExpenseMonthlyTrend
 	get /stats/monthly (ExpenseStatsReq) returns (ExpenseMonthlyTrendResp)
 }
+
+// ══════════════════════════════════════════════
+// LifeLog 生活记录（需 JWT）
+// ══════════════════════════════════════════════
+type (
+	LifeLogInfo {
+		ID         uint64 `json:"id"`
+		Content    string `json:"content"`
+		Tags       string `json:"tags,optional"`
+		OccurredAt string `json:"occurred_at"`
+		CreatedAt  string `json:"created_at"`
+		UpdatedAt  string `json:"updated_at"`
+	}
+	CreateLifeLogReq {
+		Content    string `json:"content"`
+		Tags       string `json:"tags,optional"`
+		OccurredAt string `json:"occurred_at"`
+	}
+	UpdateLifeLogReq {
+		ID         uint64 `json:"id"`
+		Content    string `json:"content,optional"`
+		Tags       string `json:"tags,optional"`
+		OccurredAt string `json:"occurred_at,optional"`
+	}
+	DeleteLifeLogReq {
+		ID uint64 `json:"id"`
+	}
+	ListLifeLogReq {
+		PageSize  uint32 `form:"page_size"`
+		PageToken string `form:"page_token,optional"`
+		Date      string `form:"date,optional"`
+	}
+	ListLifeLogResp {
+		List      []LifeLogInfo `json:"list"`
+		PageToken string        `json:"page_token"`
+		HasMore   bool          `json:"has_more"`
+	}
+	LifeLogByDateReq {
+		Date string `form:"date"` // "2006-01-02"
+	}
+	LifeLogByDateResp {
+		List []LifeLogInfo `json:"list"`
+	}
+)
+
+@server (
+	prefix:     /api/v1/life_log
+	group:      lifelog
+	tags:       "lifelog"
+	middleware: JWTMiddleware,IPMiddleware
+)
+service life_tracker {
+	@doc "创建生活记录"
+	@handler CreateLifeLog
+	post /create (CreateLifeLogReq) returns (IDResponse)
+
+	@doc "更新生活记录"
+	@handler UpdateLifeLog
+	post /update (UpdateLifeLogReq) returns (Response)
+
+	@doc "删除生活记录"
+	@handler DeleteLifeLog
+	post /delete (DeleteLifeLogReq) returns (Response)
+
+	@doc "生活记录列表（游标分页）"
+	@handler ListLifeLog
+	get /list (ListLifeLogReq) returns (ListLifeLogResp)
+
+	@doc "按天查询生活记录"
+	@handler LifeLogByDate
+	get /by_date (LifeLogByDateReq) returns (LifeLogByDateResp)
+}
+

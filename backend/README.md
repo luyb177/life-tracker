@@ -3,9 +3,9 @@
 个人生活记录后端服务，覆盖：
 
 1. **认证与鉴权**
-2. **支出记录与统计**
-3. **生活记录 / 周期总结统一承载层**
-4. **AI 日报 / 周报 / 月报 / 年报 / 人生总结**
+2. **生活记录（life_logs）增删改查**
+3. **支出记录与统计**
+4. **AI 日报 / 周报 / 月报 / 年报**
 
 ---
 
@@ -42,7 +42,8 @@ backend/
 │   │   ├── auth/             # 注册 / 登录 / 刷新令牌
 │   │   ├── cron/             # AI 总结主流程
 │   │   ├── expense/          # 支出 CRUD 与统计
-│   │   ├── summary/          # 生活记录 / 总结
+│   │   ├── lifelog/          # 生活记录 CRUD
+│   │   ├── summary/          # 周期总结（日/周/月/年报）
 │   │   └── user/             # 用户资料 / 修改密码
 │   ├── middleware/           # JWT / IP 中间件
 │   ├── pkg/
@@ -51,6 +52,7 @@ backend/
 │   │   └── ip/               # IP 解析
 │   ├── repo/                 # 数据访问层
 │   │   ├── expense/
+│   │   ├── lifelog/
 │   │   ├── summary/
 │   │   ├── token/
 │   │   ├── user/
@@ -103,28 +105,17 @@ backend/
 
 ---
 
-## 4.2 Summary 重复规则
+### 4.2 Summary 重复规则
 
-当前业务规则如下：
+1. **所有 period_type（1-4）+ 同 source**：同周期仅允许一条记录，若已存在应走 `/summary/update`
+2. **`source=AI`**：同用户、同周期、同 `period_start` 仅保留一条，重跑 AI 时更新原记录
+3. **AI 不覆盖用户记录**：AI 与用户记录通过 `source` 分层共存
 
-1. **`source=user + day`**
-   - 同一天允许多条
-   - 用于记录多个生活片段 / 多条日报内容
-
-2. **`source=user + week/month/year/life`**
-   - 同周期仅允许一条
-   - 若已存在，应走 `/summary/update`
-
-3. **`source=AI`**
-   - 同用户、同周期、同 `period_start` 仅保留一条
-   - 重跑 AI 时更新原记录，不新建重复记录
-
-4. **AI 不覆盖用户记录**
-   - AI 与用户记录通过 `source` 分层共存
+生活记录（life_logs）的重复规则由 `life_logs` 模块独立管理，不受 summaries 约束。
 
 ---
 
-## 4.3 Summary 周期模型
+### 4.3 Summary 周期模型
 
 当前 `summary.period_start` / `summary.period_end` 已统一为：
 
@@ -139,7 +130,6 @@ backend/
 | 2 | 周报 | 必须是周一 | `start + 7 天` |
 | 3 | 月报 | 必须是当月第一天 | 下月第一天 |
 | 4 | 年报 | 必须是当年 1 月 1 日 | 下一年 1 月 1 日 |
-| 5 | 人生总结 | 任意合法日期 | 必须晚于 `start` |
 
 ### 示例
 
@@ -149,21 +139,18 @@ backend/
 | 周报 | `2026-06-15` | `2026-06-22` |
 | 月报 | `2026-06-01` | `2026-07-01` |
 | 年报 | `2026-01-01` | `2027-01-01` |
-| 人生总结 | `2020-01-01` | `2026-06-17` |
 
 ---
 
-## 4.4 AI 总结输入来源
+### 4.4 AI 总结输入来源
 
 AI 总结不是只看支出，它会综合使用：
 
 1. **支出汇总**
 2. **分类支出明细**
 3. **地点分布**
-4. **用户日报内容**
+4. **用户生活记录**（从 `life_logs` 读取）
 5. **下级周期总结**
-6. **人生总结场景下的长期标签偏好**
-7. **人生总结场景下最近 12 个月的记录 / 支出 / 标签趋势**
 
 ### 下级周期关系
 
@@ -173,7 +160,6 @@ AI 总结不是只看支出，它会综合使用：
 | 周报 | 日报 |
 | 月报 | 周报 |
 | 年报 | 月报 |
-| 人生总结 | 年报 |
 
 ---
 
@@ -326,17 +312,15 @@ docker compose up -d
 | 周报 | 每周一 08:00 |
 | 月报 | 每月 1 日 08:00 |
 | 年报 | 每年 1 月 1 日 08:00 |
-| 人生总结 | 每年 1 月 1 日 09:00 |
 
 ### 手动触发
 
 ```bash
-# 1=日报 2=周报 3=月报 4=年报 5=人生总结
+# 1=日报 2=周报 3=月报 4=年报
 docker compose run --rm life-tracker-cron cron summary -t 1
 docker compose run --rm life-tracker-cron cron summary -t 2
 docker compose run --rm life-tracker-cron cron summary -t 3
 docker compose run --rm life-tracker-cron cron summary -t 4
-docker compose run --rm life-tracker-cron cron summary -t 5
 ```
 
 ---
@@ -364,7 +348,7 @@ docker compose run --rm life-tracker-cron cron summary -t 5
 
 ## 11. API 总览
 
-## 11.1 Auth
+## 12.1 Auth
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -373,14 +357,14 @@ docker compose run --rm life-tracker-cron cron summary -t 5
 | POST | `/api/v1/auth/login` | 登录 |
 | POST | `/api/v1/auth/refresh` | 刷新令牌 |
 
-## 11.2 User
+## 12.2 User
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | POST | `/api/v1/user/update_info` | 更新用户信息 |
 | POST | `/api/v1/user/change_password` | 修改密码 |
 
-## 11.3 Expense
+## 12.3 Expense
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -398,11 +382,21 @@ docker compose run --rm life-tracker-cron cron summary -t 5
 | GET | `/api/v1/expense/stats/trend?start=YYYY-MM-DD&end=YYYY-MM-DD` | 按日趋势 |
 | GET | `/api/v1/expense/stats/monthly?start=YYYY-MM-DD&end=YYYY-MM-DD` | 按月趋势 |
 
-## 11.4 Summary
+## 12.4 LifeLog
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| POST | `/api/v1/summary/create` | 创建用户记录 / 主动总结 |
+| POST | `/api/v1/life_log/create` | 创建生活记录 |
+| POST | `/api/v1/life_log/update` | 更新生活记录 |
+| POST | `/api/v1/life_log/delete` | 删除生活记录 |
+| GET | `/api/v1/life_log/list?page_size=N` | 游标分页列表（支持 tag 过滤） |
+| GET | `/api/v1/life_log/by_date?date=YYYY-MM-DD` | 按天查询生活记录 |
+
+## 12.5 Summary
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/v1/summary/create` | 创建用户总结 |
 | POST | `/api/v1/summary/update` | 更新 summary |
 | POST | `/api/v1/summary/delete` | 删除 summary |
 | GET | `/api/v1/summary/list` | 游标分页列表 |
@@ -414,9 +408,9 @@ docker compose run --rm life-tracker-cron cron summary -t 5
 
 ---
 
-## 12. 常见请求示例
+## 13. 常见请求示例
 
-## 12.1 登录
+## 13.1 登录
 
 ```bash
 curl -X POST http://127.0.0.1:8888/api/v1/auth/login \
@@ -428,7 +422,23 @@ curl -X POST http://127.0.0.1:8888/api/v1/auth/login \
   }'
 ```
 
-## 12.2 创建一条用户日报
+## 12.2 创建一条生活记录
+
+```bash
+curl -X POST http://127.0.0.1:8888/api/v1/life_log/create   -H "Authorization: Bearer <token>"   -H "Content-Type: application/json"   -d '{
+    "content": "今天主要写代码、看房、晚饭吃得比较简单。",
+    "tags": "工作,看房,晚饭",
+    "occurred_at": "2026-07-04 18:30:00"
+  }'
+```
+
+## 12.3 查询某天的生活记录
+
+```bash
+curl "http://127.0.0.1:8888/api/v1/life_log/by_date?date=2026-07-04"   -H "Authorization: Bearer <token>"
+```
+
+## 12.4 创建一条用户日报
 
 ```bash
 curl -X POST http://127.0.0.1:8888/api/v1/summary/create \
@@ -444,7 +454,7 @@ curl -X POST http://127.0.0.1:8888/api/v1/summary/create \
   }'
 ```
 
-## 12.3 创建一条用户周报
+## 12.5 创建一条用户周报
 
 ```bash
 curl -X POST http://127.0.0.1:8888/api/v1/summary/create \
@@ -460,7 +470,7 @@ curl -X POST http://127.0.0.1:8888/api/v1/summary/create \
   }'
 ```
 
-## 12.4 手动生成 AI 月报
+## 12.6 手动生成 AI 月报
 
 ```bash
 curl -X POST http://127.0.0.1:8888/api/v1/summary/generate \
@@ -472,7 +482,7 @@ curl -X POST http://127.0.0.1:8888/api/v1/summary/generate \
   }'
 ```
 
-## 12.5 查询标签趋势
+## 12.7 查询标签趋势
 
 ```bash
 curl "http://127.0.0.1:8888/api/v1/summary/stats/tag_trend?start=2026-01-01&end=2026-12-31" \
@@ -481,7 +491,7 @@ curl "http://127.0.0.1:8888/api/v1/summary/stats/tag_trend?start=2026-01-01&end=
 
 ---
 
-## 13. 前端联调要点
+## 14. 前端联调要点
 
 1. `summary/day` 返回用户记录和 AI 日报混合列表，前端按 `source` 分组展示
 2. 同一天多条用户日报是合法行为，不要在前端假设“每天只有一条”
@@ -491,7 +501,7 @@ curl "http://127.0.0.1:8888/api/v1/summary/stats/tag_trend?start=2026-01-01&end=
 
 ---
 
-## 14. 数据库迁移
+## 15. 数据库迁移
 
 首次部署或模型变更时执行：
 
@@ -507,9 +517,9 @@ ALTER TABLE summaries ADD COLUMN tags VARCHAR(500) DEFAULT '' AFTER title;
 
 ---
 
-## 15. 维护建议
+## 16. 维护建议
 
 1. 新增接口时优先修改 `life_tracker.api`
-2. 新增 summary 相关能力时，优先复用当前统一周期模型
+2. 生活记录和周期总结是独立模块，不要混用
 3. 不要重新引入 `YYYY-Wxx`、`YYYY-MM`、`YYYY` 这类混合存储格式
 4. 新的 AI 总结能力优先在 `internal/logic/cron/summary.go` 汇总上下文

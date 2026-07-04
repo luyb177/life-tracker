@@ -109,23 +109,20 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 	return svcCtx.Repos.Summary.Create(ctx, s)
 }
 
-// buildJournalContext 获取周期内的用户日报内容作为 AI 上下文
+// buildJournalContext 获取周期内的用户生活记录作为 AI 上下文
 func buildJournalContext(ctx context.Context, svcCtx *svc.ServiceContext, userID uint64, start, end time.Time) string {
-	startStr := start.Format("2006-01-02")
-	endStr := end.Format("2006-01-02")
-
-	journals, err := svcCtx.Repos.Summary.FindByPeriodRangeAndSource(ctx, userID, constvar.SummaryPeriodTypeDay, startStr, endStr, constvar.SummarySourceUser)
-	if err != nil || len(journals) == 0 {
+	logs, err := svcCtx.Repos.LifeLog.FindByDateRange(ctx, userID, start, end)
+	if err != nil || len(logs) == 0 {
 		return "（无用户记录）"
 	}
 
 	var sb strings.Builder
-	for _, j := range journals {
-		content := j.SummaryContent
+	for _, l := range logs {
+		content := l.Content
 		if len([]rune(content)) > 300 {
 			content = string([]rune(content)[:300]) + "..."
 		}
-		sb.WriteString(fmt.Sprintf("【%s】%s\n", j.PeriodStart, content))
+		sb.WriteString(fmt.Sprintf("【%s】%s\n", l.OccurredAt.Format("2006-01-02"), content))
 	}
 	return sb.String()
 }

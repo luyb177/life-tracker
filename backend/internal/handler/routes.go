@@ -8,6 +8,7 @@ import (
 
 	auth "github.com/luyb177/life-tracker/backend/internal/handler/auth"
 	expense "github.com/luyb177/life-tracker/backend/internal/handler/expense"
+	lifelog "github.com/luyb177/life-tracker/backend/internal/handler/lifelog"
 	summary "github.com/luyb177/life-tracker/backend/internal/handler/summary"
 	user "github.com/luyb177/life-tracker/backend/internal/handler/user"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
@@ -134,6 +135,45 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/expense"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.JWTMiddleware, serverCtx.IPMiddleware},
+			[]rest.Route{
+				{
+					// 按天查询生活记录
+					Method:  http.MethodGet,
+					Path:    "/by_date",
+					Handler: lifelog.LifeLogByDateHandler(serverCtx),
+				},
+				{
+					// 创建生活记录
+					Method:  http.MethodPost,
+					Path:    "/create",
+					Handler: lifelog.CreateLifeLogHandler(serverCtx),
+				},
+				{
+					// 删除生活记录
+					Method:  http.MethodPost,
+					Path:    "/delete",
+					Handler: lifelog.DeleteLifeLogHandler(serverCtx),
+				},
+				{
+					// 生活记录列表（游标分页）
+					Method:  http.MethodGet,
+					Path:    "/list",
+					Handler: lifelog.ListLifeLogHandler(serverCtx),
+				},
+				{
+					// 更新生活记录
+					Method:  http.MethodPost,
+					Path:    "/update",
+					Handler: lifelog.UpdateLifeLogHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/life_log"),
 	)
 
 	server.AddRoutes(

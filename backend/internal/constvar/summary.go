@@ -32,3 +32,8 @@ var DefaultExpenseCategories = []string{"早饭", "午饭", "晚饭", "杂项"}
 const (
 	ExpensePageTokenPrefix = "expense"
 )
+
+// 生活记录分页游标
+const (
+	LifeLogPageTokenPrefix = "lifelog"
+)

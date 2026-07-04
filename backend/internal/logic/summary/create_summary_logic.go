@@ -53,16 +53,14 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 	normalizedStart := startAt.Format("2006-01-02")
 	normalizedEnd := endAt.Format("2006-01-02")
 
-	// 非日报用户记录：同周期仅允许一条
-	if req.PeriodType != constvar.SummaryPeriodTypeDay {
-		exists, err := l.svcCtx.Repos.Summary.ExistsByPeriodAndSource(l.ctx, authUser.UserID, req.PeriodType, normalizedStart, constvar.SummarySourceUser)
-		if err != nil {
-			l.Errorf("check summary exists failed: %v", err)
-			return nil, errorx.WrapDBQuery("查询已有记录失败", err)
-		}
-		if exists {
-			return nil, errorx.WrapBadRequest(fmt.Sprintf("该%s已存在，不允许重复创建", periodTypeLabel(req.PeriodType)), nil)
-		}
+	// 同周期仅允许一条用户记录
+	exists, err := l.svcCtx.Repos.Summary.ExistsByPeriodAndSource(l.ctx, authUser.UserID, req.PeriodType, normalizedStart, constvar.SummarySourceUser)
+	if err != nil {
+		l.Errorf("check summary exists failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询已有记录失败", err)
+	}
+	if exists {
+		return nil, errorx.WrapBadRequest(fmt.Sprintf("该%s已存在，不允许重复创建", periodTypeLabel(req.PeriodType)), nil)
 	}
 
 	s := &summary.Summary{

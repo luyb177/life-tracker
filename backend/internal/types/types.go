@@ -23,6 +23,12 @@ type CreateExpenseLogReq struct {
 	OccurredAt string  `json:"occurred_at"`
 }
 
+type CreateLifeLogReq struct {
+	Content    string `json:"content"`
+	Tags       string `json:"tags,optional"`
+	OccurredAt string `json:"occurred_at"`
+}
+
 type CreateSummaryReq struct {
 	PeriodType        uint8  `json:"period_type"`
 	PeriodStart       string `json:"period_start"`
@@ -47,6 +53,10 @@ type DeleteExpenseCategoryReq struct {
 }
 
 type DeleteExpenseLogReq struct {
+	ID uint64 `json:"id"`
+}
+
+type DeleteLifeLogReq struct {
 	ID uint64 `json:"id"`
 }
 
@@ -129,6 +139,23 @@ type IPLocation struct {
 	ISOCode  string `json:"iso_code"`
 }
 
+type LifeLogByDateReq struct {
+	Date string `form:"date"` // "2006-01-02"
+}
+
+type LifeLogByDateResp struct {
+	List []LifeLogInfo `json:"list"`
+}
+
+type LifeLogInfo struct {
+	ID         uint64 `json:"id"`
+	Content    string `json:"content"`
+	Tags       string `json:"tags,optional"`
+	OccurredAt string `json:"occurred_at"`
+	CreatedAt  string `json:"created_at"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
 type ListExpenseCategoryResp struct {
 	Categories []ExpenseCategoryInfo `json:"categories"`
 }
@@ -142,6 +169,19 @@ type ListExpenseLogResp struct {
 	List      []ExpenseLogInfo `json:"list"`
 	PageToken string           `json:"page_token"`
 	HasMore   bool             `json:"has_more"`
+}
+
+type ListLifeLogReq struct {
+	PageSize  uint32 `form:"page_size"`
+	PageToken string `form:"page_token,optional"`
+	Date      string `form:"date,optional"`
+	Tag       string `form:"tag,optional"`
+}
+
+type ListLifeLogResp struct {
+	List      []LifeLogInfo `json:"list"`
+	PageToken string        `json:"page_token"`
+	HasMore   bool          `json:"has_more"`
 }
 
 type ListSummaryReq struct {
@@ -265,6 +305,13 @@ type UpdateExpenseLogReq struct {
 	Amount     float64 `json:"amount,optional"`
 	Note       string  `json:"note,optional"`
 	OccurredAt string  `json:"occurred_at,optional"`
+}
+
+type UpdateLifeLogReq struct {
+	ID         uint64 `json:"id"`
+	Content    string `json:"content,optional"`
+	Tags       string `json:"tags,optional"`
+	OccurredAt string `json:"occurred_at,optional"`
 }
 
 type UpdateSummaryReq struct {
