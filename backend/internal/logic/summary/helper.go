@@ -1,11 +1,16 @@
 package summary
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
 
+	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/constvar"
+	"github.com/luyb177/life-tracker/backend/internal/repo/summary"
+	"github.com/luyb177/life-tracker/backend/internal/svc"
+	"github.com/luyb177/life-tracker/backend/internal/types"
 )
 
 var reDay = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -116,4 +121,66 @@ func periodTypeLabel(t uint8) string {
 
 func periodStartHint(t uint8) string {
 	return "YYYY-MM-DD"
+}
+
+// resolveSummaryTags 解析标签列表并关联到 summary
+func resolveSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summaryID uint64, tags []types.TagInfo) error {
+	if len(tags) == 0 {
+		return nil
+	}
+	tagIDs := make([]uint64, 0, len(tags))
+	for _, t := range tags {
+		if t.ID == 0 {
+			tag, err := svcCtx.Repos.Tag.FindOrCreate(ctx, t.Name)
+			if err != nil {
+				return errorx.WrapDBInsert("创建标签失败", err)
+			}
+			tagIDs = append(tagIDs, tag.ID)
+		} else {
+			tag, err := svcCtx.Repos.Tag.FindByID(ctx, t.ID)
+			if err != nil {
+				return errorx.WrapDBQuery("查询标签失败", err)
+			}
+			if tag == nil {
+				return errorx.ErrNotFound
+			}
+			tagIDs = append(tagIDs, tag.ID)
+		}
+	}
+	return svcCtx.Repos.Tag.BatchLinkSummary(ctx, summaryID, tagIDs)
+}
+
+// batchFillSummaryTags 批量填充 summary 的标签
+func batchFillSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summaryIDs []uint64) (map[uint64][]types.TagInfo, error) {
+	tagMap, err := svcCtx.Repos.Tag.BatchFindBySummaryIDs(ctx, summaryIDs)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[uint64][]types.TagInfo)
+	for id, tags := range tagMap {
+		infos := make([]types.TagInfo, 0, len(tags))
+		for _, t := range tags {
+			infos = append(infos, types.TagInfo{ID: t.ID, Name: t.Name})
+		}
+		result[id] = infos
+	}
+	return result, nil
+}
+
+// summaryToInfo 将 summary 模型转为 API 响应
+func summaryToInfo(s *summary.Summary, tagInfos []types.TagInfo) types.SummaryInfo {
+	return types.SummaryInfo{
+		ID:                s.ID,
+		PeriodType:        s.PeriodType,
+		PeriodStart:       s.PeriodStart,
+		PeriodEnd:         s.PeriodEnd,
+		Source:            s.Source,
+		SummaryContent:    s.SummaryContent,
+		SuggestionContent: s.SuggestionContent,
+		Title:             s.Title,
+		Tags:              tagInfos,
+		Location:          s.Location,
+		CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),
+	}
 }

@@ -3,11 +3,6 @@
 
 package types
 
-type TagInfo struct {
-	ID   uint64 `json:"id"`
-	Name string `json:"name"`
-}
-
 type AuthUser struct {
 	UserID uint64 `json:"user_id"`
 }
@@ -35,13 +30,13 @@ type CreateLifeLogReq struct {
 }
 
 type CreateSummaryReq struct {
-	PeriodType        uint8  `json:"period_type"`
-	PeriodStart       string `json:"period_start"`
-	PeriodEnd         string `json:"period_end"`
-	SummaryContent    string `json:"summary_content"`
-	SuggestionContent string `json:"suggestion_content,optional"`
-	Title             string `json:"title,optional"`
-	Tags              string `json:"tags,optional"`
+	PeriodType        uint8     `json:"period_type"`
+	PeriodStart       string    `json:"period_start"`
+	PeriodEnd         string    `json:"period_end"`
+	SummaryContent    string    `json:"summary_content"`
+	SuggestionContent string    `json:"suggestion_content,optional"`
+	Title             string    `json:"title,optional"`
+	Tags              []TagInfo `json:"tags,optional"`
 }
 
 type DailyExpenseTotalReq struct {
@@ -262,18 +257,18 @@ type SummaryDayResp struct {
 }
 
 type SummaryInfo struct {
-	ID                uint64 `json:"id"`
-	PeriodType        uint8  `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
-	PeriodStart       string `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
-	PeriodEnd         string `json:"period_end"`   // 周期结束日期（开区间），统一使用 YYYY-MM-DD
-	Source            uint8  `json:"source"`       // 1=AI, 2=用户
-	SummaryContent    string `json:"summary_content"`
-	SuggestionContent string `json:"suggestion_content,optional"`
-	Title             string `json:"title,optional"`
-	Tags              string `json:"tags,optional"`
-	Location          string `json:"location,optional"`
-	CreatedAt         string `json:"created_at"`
-	UpdatedAt         string `json:"updated_at"`
+	ID                uint64    `json:"id"`
+	PeriodType        uint8     `json:"period_type"`  // 1=日报, 2=周报, 3=月报, 4=年报, 5=人生总结
+	PeriodStart       string    `json:"period_start"` // 周期起始日期，统一使用 YYYY-MM-DD
+	PeriodEnd         string    `json:"period_end"`   // 周期结束日期（开区间），统一使用 YYYY-MM-DD
+	Source            uint8     `json:"source"`       // 1=AI, 2=用户
+	SummaryContent    string    `json:"summary_content"`
+	SuggestionContent string    `json:"suggestion_content,optional"`
+	Title             string    `json:"title,optional"`
+	Tags              []TagInfo `json:"tags,optional"`
+	Location          string    `json:"location,optional"`
+	CreatedAt         string    `json:"created_at"`
+	UpdatedAt         string    `json:"updated_at"`
 }
 
 type SummaryRangeReq struct {
@@ -304,6 +299,11 @@ type TagCount struct {
 	Count int64  `json:"count"`
 }
 
+type TagInfo struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
 type UpdateExpenseLogReq struct {
 	ID         uint64  `json:"id"`
 	CategoryID uint64  `json:"category_id,optional"`
@@ -320,11 +320,11 @@ type UpdateLifeLogReq struct {
 }
 
 type UpdateSummaryReq struct {
-	ID                uint64 `json:"id"`
-	SummaryContent    string `json:"summary_content,optional"`
-	SuggestionContent string `json:"suggestion_content,optional"`
-	Title             string `json:"title,optional"`
-	Tags              string `json:"tags,optional"`
+	ID                uint64    `json:"id"`
+	SummaryContent    string    `json:"summary_content,optional"`
+	SuggestionContent string    `json:"suggestion_content,optional"`
+	Title             string    `json:"title,optional"`
+	Tags              []TagInfo `json:"tags,optional"`
 }
 
 type UpdateUserInfoReq struct {

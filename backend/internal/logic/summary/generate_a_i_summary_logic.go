@@ -69,6 +69,13 @@ func (l *GenerateAISummaryLogic) GenerateAISummary(req *types.GenerateAISummaryR
 		return nil, errorx.ErrNotFound
 	}
 
+	// 查询标签
+	tagMap, _ := batchFillSummaryTags(l.ctx, l.svcCtx, []uint64{s.ID})
+	tagInfos := tagMap[s.ID]
+	if tagInfos == nil {
+		tagInfos = []types.TagInfo{}
+	}
+
 	return &types.SummaryInfo{
 		ID:                s.ID,
 		PeriodType:        s.PeriodType,
@@ -78,7 +85,7 @@ func (l *GenerateAISummaryLogic) GenerateAISummary(req *types.GenerateAISummaryR
 		SummaryContent:    s.SummaryContent,
 		SuggestionContent: s.SuggestionContent,
 		Title:             s.Title,
-		Tags:              s.Tags,
+		Tags:              tagInfos,
 		Location:          s.Location,
 		CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),

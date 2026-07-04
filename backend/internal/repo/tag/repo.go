@@ -8,22 +8,40 @@ import (
 )
 
 type Repository interface {
-	// FindOrCreate 按名称查找标签，不存在则创建（用于前端传入 id=0 的新标签）
+	// FindOrCreate 按名称查找标签，不存在则创建
 	FindOrCreate(ctx context.Context, name string, tx ...*gorm.DB) (*Tag, error)
 	// FindByID 按 ID 查找
 	FindByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Tag, error)
 	// FindAll 列出所有标签
 	FindAll(ctx context.Context, tx ...*gorm.DB) ([]*Tag, error)
-	// BatchLink 批量创建 life_log_tags 关联
+
+	// ── LifeLog 关联 ──
 	BatchLink(ctx context.Context, lifeLogID uint64, tagIDs []uint64, tx ...*gorm.DB) error
-	// FindByLifeLogID 查某条 life_log 的所有标签
 	FindByLifeLogID(ctx context.Context, lifeLogID uint64, tx ...*gorm.DB) ([]*Tag, error)
-	// BatchFindByLifeLogIDs 批量查多条 life_log 的标签
 	BatchFindByLifeLogIDs(ctx context.Context, lifeLogIDs []uint64, tx ...*gorm.DB) (map[uint64][]*Tag, error)
-	// DeleteByLifeLogID 删除某条 life_log 的所有标签关联
 	DeleteByLifeLogID(ctx context.Context, lifeLogID uint64, tx ...*gorm.DB) error
-	// FindLifeLogIDsByTagID 按标签 ID 查关联的 life_log ID 列表
 	FindLifeLogIDsByTagID(ctx context.Context, tagID uint64, userID uint64, tx ...*gorm.DB) ([]uint64, error)
+
+	// ── Summary 关联 ──
+	BatchLinkSummary(ctx context.Context, summaryID uint64, tagIDs []uint64, tx ...*gorm.DB) error
+	FindBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) ([]*Tag, error)
+	BatchFindBySummaryIDs(ctx context.Context, summaryIDs []uint64, tx ...*gorm.DB) (map[uint64][]*Tag, error)
+	DeleteBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) error
+	// ListTagFrequencies 按日期范围统计标签频次（替代 strings.Split）
+	ListTagFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagFrequency, error)
+	// ListTagMonthFrequencies 按月份+标签统计（替代 tag_trend）
+	ListTagMonthFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagMonthFrequency, error)
+}
+
+type TagFrequency struct {
+	Tag   string
+	Count int64
+}
+
+type TagMonthFrequency struct {
+	Month string
+	Tag   string
+	Count int64
 }
 
 type repo struct {
@@ -72,6 +90,8 @@ func (r *repo) FindAll(ctx context.Context, tx ...*gorm.DB) ([]*Tag, error) {
 	return list, err
 }
 
+// ── LifeLog helpers ──
+
 func (r *repo) BatchLink(ctx context.Context, lifeLogID uint64, tagIDs []uint64, tx ...*gorm.DB) error {
 	if len(tagIDs) == 0 {
 		return nil
@@ -111,7 +131,6 @@ func (r *repo) BatchFindByLifeLogIDs(ctx context.Context, lifeLogIDs []uint64, t
 	if err != nil {
 		return nil, err
 	}
-
 	result := make(map[uint64][]*Tag)
 	for _, row := range rows {
 		result[row.LifeLogID] = append(result[row.LifeLogID], &Tag{ID: row.TagID, Name: row.TagName})
@@ -132,4 +151,84 @@ func (r *repo) FindLifeLogIDsByTagID(ctx context.Context, tagID uint64, userID u
 		Where("life_log_tags.tag_id = ? AND life_logs.user_id = ?", tagID, userID).
 		Pluck("life_log_tags.life_log_id", &ids).Error
 	return ids, err
+}
+
+// ── Summary helpers ──
+
+func (r *repo) BatchLinkSummary(ctx context.Context, summaryID uint64, tagIDs []uint64, tx ...*gorm.DB) error {
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	links := make([]SummaryTag, 0, len(tagIDs))
+	for _, tid := range tagIDs {
+		links = append(links, SummaryTag{SummaryID: summaryID, TagID: tid})
+	}
+	return r.getDB(ctx, tx...).Create(&links).Error
+}
+
+func (r *repo) FindBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) ([]*Tag, error) {
+	var tags []*Tag
+	err := r.getDB(ctx, tx...).
+		Joins("JOIN summary_tags ON summary_tags.tag_id = tags.id").
+		Where("summary_tags.summary_id = ?", summaryID).
+		Find(&tags).Error
+	return tags, err
+}
+
+func (r *repo) BatchFindBySummaryIDs(ctx context.Context, summaryIDs []uint64, tx ...*gorm.DB) (map[uint64][]*Tag, error) {
+	if len(summaryIDs) == 0 {
+		return nil, nil
+	}
+	type row struct {
+		SummaryID uint64
+		TagID     uint64
+		TagName   string
+	}
+	var rows []row
+	err := r.getDB(ctx, tx...).
+		Table("summary_tags").
+		Select("summary_tags.summary_id, tags.id as tag_id, tags.name as tag_name").
+		Joins("JOIN tags ON tags.id = summary_tags.tag_id").
+		Where("summary_tags.summary_id IN ?", summaryIDs).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[uint64][]*Tag)
+	for _, row := range rows {
+		result[row.SummaryID] = append(result[row.SummaryID], &Tag{ID: row.TagID, Name: row.TagName})
+	}
+	return result, nil
+}
+
+func (r *repo) DeleteBySummaryID(ctx context.Context, summaryID uint64, tx ...*gorm.DB) error {
+	return r.getDB(ctx, tx...).Where("summary_id = ?", summaryID).Delete(&SummaryTag{}).Error
+}
+
+func (r *repo) ListTagFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagFrequency, error) {
+	var results []TagFrequency
+	err := r.getDB(ctx, tx...).
+		Table("summary_tags").
+		Select("tags.name as tag, COUNT(*) as count").
+		Joins("JOIN tags ON tags.id = summary_tags.tag_id").
+		Joins("JOIN summaries ON summaries.id = summary_tags.summary_id").
+		Where("summaries.user_id = ? AND summaries.period_start >= ? AND summaries.period_start < ?", userID, start, end).
+		Group("tags.name").
+		Order("count DESC").
+		Scan(&results).Error
+	return results, err
+}
+
+func (r *repo) ListTagMonthFrequencies(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagMonthFrequency, error) {
+	var results []TagMonthFrequency
+	err := r.getDB(ctx, tx...).
+		Table("summary_tags").
+		Select("SUBSTR(summaries.period_start, 1, 7) as month, tags.name as tag, COUNT(*) as count").
+		Joins("JOIN tags ON tags.id = summary_tags.tag_id").
+		Joins("JOIN summaries ON summaries.id = summary_tags.summary_id").
+		Where("summaries.user_id = ? AND summaries.period_start >= ? AND summaries.period_start < ?", userID, start, end).
+		Group("SUBSTR(summaries.period_start, 1, 7), tags.name").
+		Order("month ASC, count DESC").
+		Scan(&results).Error
+	return results, err
 }

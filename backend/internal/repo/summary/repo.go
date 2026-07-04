@@ -21,19 +21,9 @@ type Repository interface {
 	FindByPeriodRange(ctx context.Context, userID uint64, periodType uint8, start, end string, tx ...*gorm.DB) ([]*Summary, error)
 	// FindByPeriodRangeAndSource 按周期类型+时间范围+来源查询
 	FindByPeriodRangeAndSource(ctx context.Context, userID uint64, periodType uint8, start, end string, source uint8, tx ...*gorm.DB) ([]*Summary, error)
-	// ListTagsByDateRange 查询时间范围内的非空标签
-	ListTagsByDateRange(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]string, error)
-	// ListTagPeriods 查询带标签和周期的记录（用于标签趋势）
-	ListTagPeriods(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagPeriod, error)
 	// ListByUser 游标分页，按 created_at 倒序
 	ListByUser(ctx context.Context, userID uint64, periodType uint8, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Summary, error)
 	Delete(ctx context.Context, id uint64, tx ...*gorm.DB) error
-}
-
-// TagPeriod 标签+所属月份
-type TagPeriod struct {
-	Month string
-	Tags  string
 }
 
 // Repository summary 仓储接口
@@ -117,24 +107,6 @@ func (r *repo) FindByPeriodRangeAndSource(ctx context.Context, userID uint64, pe
 		Order("period_start ASC").
 		Find(&list).Error
 	return list, err
-}
-
-func (r *repo) ListTagsByDateRange(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]string, error) {
-	var tags []string
-	err := r.getDB(ctx, tx...).Model(&Summary{}).
-		Select("tags").
-		Where("user_id = ? AND period_start >= ? AND period_start < ? AND tags IS NOT NULL AND tags != ''", userID, start, end).
-		Pluck("tags", &tags).Error
-	return tags, err
-}
-
-func (r *repo) ListTagPeriods(ctx context.Context, userID uint64, start, end string, tx ...*gorm.DB) ([]TagPeriod, error) {
-	var results []TagPeriod
-	err := r.getDB(ctx, tx...).Model(&Summary{}).
-		Select("SUBSTR(period_start, 1, 7) as month, tags").
-		Where("user_id = ? AND period_start >= ? AND period_start < ? AND tags IS NOT NULL AND tags != ''", userID, start, end).
-		Scan(&results).Error
-	return results, err
 }
 
 func (r *repo) ListByUser(ctx context.Context, userID uint64, periodType uint8, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Summary, error) {

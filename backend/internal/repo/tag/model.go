@@ -23,3 +23,14 @@ type LifeLogTag struct {
 func (LifeLogTag) TableName() string {
 	return "life_log_tags"
 }
+
+// SummaryTag 总结-标签关联
+type SummaryTag struct {
+	ID        uint64 `gorm:"primarykey;type:bigint unsigned auto_increment"`
+	SummaryID uint64 `gorm:"uniqueIndex:idx_summary_tag;type:bigint unsigned"`
+	TagID     uint64 `gorm:"uniqueIndex:idx_summary_tag;type:bigint unsigned"`
+}
+
+func (SummaryTag) TableName() string {
+	return "summary_tags"
+}

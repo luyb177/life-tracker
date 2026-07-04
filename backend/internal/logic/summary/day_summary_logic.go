@@ -52,22 +52,23 @@ func (l *DaySummaryLogic) DaySummary(req *types.SummaryDayReq) (*types.SummaryDa
 		return nil, errorx.WrapDBQuery("查询日报失败", err)
 	}
 
+	ids := make([]uint64, 0, len(list))
+	for _, s := range list {
+		ids = append(ids, s.ID)
+	}
+	tagMap, err := batchFillSummaryTags(l.ctx, l.svcCtx, ids)
+	if err != nil {
+		l.Errorf("batch fill tags failed: %v", err)
+		return nil, errorx.WrapDBQuery("查询标签失败", err)
+	}
+
 	items := make([]types.SummaryInfo, 0, len(list))
 	for _, s := range list {
-		items = append(items, types.SummaryInfo{
-			ID:                s.ID,
-			PeriodType:        s.PeriodType,
-			PeriodStart:       s.PeriodStart,
-			PeriodEnd:         s.PeriodEnd,
-			Source:            s.Source,
-			SummaryContent:    s.SummaryContent,
-			SuggestionContent: s.SuggestionContent,
-			Title:             s.Title,
-			Tags:              s.Tags,
-			Location:          s.Location,
-			CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
-			UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),
-		})
+		tagInfos := tagMap[s.ID]
+		if tagInfos == nil {
+			tagInfos = []types.TagInfo{}
+		}
+		items = append(items, summaryToInfo(s, tagInfos))
 	}
 
 	return &types.SummaryDayResp{List: items}, nil

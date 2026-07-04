@@ -72,7 +72,6 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		SummaryContent:    req.SummaryContent,
 		SuggestionContent: req.SuggestionContent,
 		Title:             strings.TrimSpace(req.Title),
-		Tags:              strings.TrimSpace(req.Tags),
 		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
 	}
 
@@ -81,7 +80,10 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		return nil, errorx.WrapDBInsert("创建总结失败", err)
 	}
 
-	return &types.IDResponse{
-		ID: s.ID,
-	}, nil
+	// 关联标签
+	if err := resolveSummaryTags(l.ctx, l.svcCtx, s.ID, req.Tags); err != nil {
+		return nil, err
+	}
+
+	return &types.IDResponse{ID: s.ID}, nil
 }

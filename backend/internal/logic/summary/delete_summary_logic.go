@@ -46,6 +46,12 @@ func (l *DeleteSummaryLogic) DeleteSummary(req *types.DeleteSummaryReq) (*types.
 		return nil, errorx.ErrForbidden
 	}
 
+	// 先删除标签关联，再删总结
+	if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID); err != nil {
+		l.Errorf("delete summary tags failed: %v", err)
+		return nil, errorx.WrapDBDelete("删除标签关联失败", err)
+	}
+
 	if err := l.svcCtx.Repos.Summary.Delete(l.ctx, req.ID); err != nil {
 		l.Errorf("delete summary failed: %v", err)
 		return nil, errorx.WrapDBDelete("删除总结失败", err)

@@ -1,12 +1,9 @@
 // Code scaffolded by goctl. Safe to edit.
-// goctl 1.10.1
-
 package summary
 
 import (
 	"context"
 	"sort"
-	"strings"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/middleware"
@@ -36,33 +33,20 @@ func (l *TagTrendLogic) TagTrend(req *types.SummaryTagStatsReq) (*types.SummaryT
 		return nil, errorx.ErrUnauthorized
 	}
 
-	periods, err := l.svcCtx.Repos.Summary.ListTagPeriods(l.ctx, authUser.UserID, req.Start, req.End)
+	freqs, err := l.svcCtx.Repos.Tag.ListTagMonthFrequencies(l.ctx, authUser.UserID, req.Start, req.End)
 	if err != nil {
-		l.Errorf("list tag periods failed: %v", err)
+		l.Errorf("list tag month frequencies failed: %v", err)
 		return nil, errorx.WrapDBQuery("查询标签趋势失败", err)
 	}
 
-	// 按月分组统计标签
-	monthMap := make(map[string]map[string]int64)
-	for _, p := range periods {
-		if monthMap[p.Month] == nil {
-			monthMap[p.Month] = make(map[string]int64)
-		}
-		for _, tag := range strings.Split(p.Tags, ",") {
-			tag = strings.TrimSpace(tag)
-			if tag != "" {
-				monthMap[p.Month][tag]++
-			}
-		}
+	// Group by month
+	monthMap := make(map[string][]types.TagCount)
+	for _, f := range freqs {
+		monthMap[f.Month] = append(monthMap[f.Month], types.TagCount{Tag: f.Tag, Count: f.Count})
 	}
 
-	// 转换为有序结果
 	var months []types.MonthTagStats
-	for month, tagCounts := range monthMap {
-		var tags []types.TagCount
-		for t, c := range tagCounts {
-			tags = append(tags, types.TagCount{Tag: t, Count: c})
-		}
+	for month, tags := range monthMap {
 		sort.Slice(tags, func(i, j int) bool { return tags[i].Count > tags[j].Count })
 		months = append(months, types.MonthTagStats{Month: month, Tags: tags})
 	}

@@ -57,10 +57,19 @@ func (l *UpdateSummaryLogic) UpdateSummary(req *types.UpdateSummaryReq) (*types.
 	if req.Title != "" {
 		updates["title"] = strings.TrimSpace(req.Title)
 	}
-	if req.Tags != "" {
-		updates["tags"] = strings.TrimSpace(req.Tags)
+
+	// 标签替换
+	if req.Tags != nil {
+		if err := l.svcCtx.Repos.Tag.DeleteBySummaryID(l.ctx, req.ID); err != nil {
+			l.Errorf("delete old tags failed: %v", err)
+			return nil, errorx.WrapDBDelete("删除旧标签关联失败", err)
+		}
+		if err := resolveSummaryTags(l.ctx, l.svcCtx, req.ID, req.Tags); err != nil {
+			return nil, err
+		}
 	}
-	if len(updates) == 0 {
+
+	if len(updates) == 0 && req.Tags == nil {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)
 	}
 
