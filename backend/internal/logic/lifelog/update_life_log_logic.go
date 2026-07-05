@@ -69,6 +69,8 @@ func (l *UpdateLifeLogLogic) UpdateLifeLog(req *types.UpdateLifeLogReq) (resp *t
 	if len(updates) == 0 && req.Tags == nil {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)
 	}
+	updates["last_updated_by"] = authUser.UserID
+	updates["last_updated_at"] = time.Now().In(constvar.TimeLocation)
 
 	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
 		// 如果传了 tags，替换标签关联
@@ -89,11 +91,9 @@ func (l *UpdateLifeLogLogic) UpdateLifeLog(req *types.UpdateLifeLogReq) (resp *t
 			}
 		}
 
-		if len(updates) > 0 {
-			if err := l.svcCtx.Repos.LifeLog.Update(l.ctx, req.ID, updates, tx); err != nil {
-				l.Errorf("update life log failed: %v", err)
-				return errorx.WrapDBUpdate("更新生活记录失败", err)
-			}
+		if err := l.svcCtx.Repos.LifeLog.Update(l.ctx, req.ID, updates, tx); err != nil {
+			l.Errorf("update life log failed: %v", err)
+			return errorx.WrapDBUpdate("更新生活记录失败", err)
 		}
 		return nil
 	}); err != nil {

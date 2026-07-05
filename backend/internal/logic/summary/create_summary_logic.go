@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
 	"github.com/luyb177/life-tracker/backend/internal/constvar"
@@ -53,6 +54,7 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 	}
 	normalizedStart := startAt.Format("2006-01-02")
 	normalizedEnd := endAt.Format("2006-01-02")
+	now := time.Now().In(constvar.TimeLocation)
 
 	// 同周期仅允许一条用户记录
 	exists, err := l.svcCtx.Repos.Summary.ExistsByPeriodAndSource(l.ctx, authUser.UserID, req.PeriodType, normalizedStart, constvar.SummarySourceUser)
@@ -74,6 +76,8 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		SuggestionContent: req.SuggestionContent,
 		Title:             strings.TrimSpace(req.Title),
 		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
+		LastUpdatedBy:     authUser.UserID,
+		LastUpdatedAt:     now,
 	}
 
 	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {

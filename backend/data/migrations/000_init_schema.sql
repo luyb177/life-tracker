@@ -59,6 +59,7 @@ INSERT IGNORE INTO `expense_categories` (`user_id`, `name`, `type`, `created_at`
 -- location 由 IP 中间件自动填充（格式：国家/省份/城市）
 -- status: 0=正常, 1=已退款
 -- refunded_at: 退款时间（非空时 status 必为 1）
+-- last_updated_by / last_updated_at: 最后一次更新的用户与时间
 -- 统计查询自动排除 status=1 的记录
 -- ############################################################################
 CREATE TABLE `expense_logs` (
@@ -74,6 +75,8 @@ CREATE TABLE `expense_logs` (
     `occurred_at` datetime,
     `status`      tinyint unsigned DEFAULT 0,
     `refunded_at` datetime,
+    `last_updated_by` bigint unsigned DEFAULT 0,
+    `last_updated_at` datetime(3) NULL,
     PRIMARY KEY (`id`),
     INDEX `idx_user_date` (`user_id`, `occurred_at`),
     INDEX `idx_expense_logs_category_id` (`category_id`)
@@ -88,6 +91,7 @@ CREATE TABLE `expense_logs` (
 -- summary_content: 总结正文（AI 生成或用户手写）
 -- suggestion_content: 改进建议
 -- location: AI 生成时汇总的地点分布文本
+-- last_updated_by / last_updated_at: 最后一次内容更新的用户与时间；系统任务更新时 last_updated_by=0
 -- 去重规则：同 (user_id, period_type, period_start, source) 仅保留一条
 -- ############################################################################
 CREATE TABLE `summaries` (
@@ -105,8 +109,11 @@ CREATE TABLE `summaries` (
     `title`              varchar(255),
     `location`           varchar(255),
     `status`             tinyint unsigned DEFAULT 1,
+    `last_updated_by`    bigint unsigned DEFAULT 0,
+    `last_updated_at`    datetime(3) NULL,
     PRIMARY KEY (`id`),
-    INDEX `idx_user_period` (`user_id`, `period_type`, `period_start`)
+    INDEX `idx_user_period` (`user_id`, `period_type`, `period_start`),
+    UNIQUE INDEX `idx_user_period_source_live` (`user_id`, `period_type`, `period_start`, `source`, `deleted_at`)
 );
 
 -- ############################################################################
@@ -124,6 +131,8 @@ CREATE TABLE `life_logs` (
     `user_id`     bigint unsigned,
     `content`     text,
     `occurred_at` datetime,
+    `last_updated_by` bigint unsigned DEFAULT 0,
+    `last_updated_at` datetime(3) NULL,
     PRIMARY KEY (`id`),
     INDEX `idx_user_date` (`user_id`, `occurred_at`)
 );

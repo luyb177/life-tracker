@@ -15,12 +15,17 @@ import (
 
 // Run 执行 AI 总结
 // periodStart 为零值时自动按当前时间计算周期；非零值时以此日期为起始计算结束日期。
-func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, userID uint64, periodStart time.Time) error {
+// lastUpdatedBy 为空时表示系统任务更新，记为 0。
+func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, userID uint64, periodStart time.Time, lastUpdatedBy ...uint64) error {
 	var periodEnd time.Time
 	if periodStart.IsZero() {
 		periodStart, periodEnd = calcPeriod(periodType)
 	} else {
 		periodEnd = calcPeriodEnd(periodType, periodStart)
+	}
+	modifierID := uint64(0)
+	if len(lastUpdatedBy) > 0 {
+		modifierID = lastUpdatedBy[0]
 	}
 
 	// 1. 查分类支出
@@ -80,6 +85,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 
 	// 5. 保存（按 source=AI 查找避免用户手写记录干扰去重）
 	periodStartStr := periodStart.Format("2006-01-02")
+	now := time.Now().In(constvar.TimeLocation)
 	s := &summary.Summary{
 		UserID:            userID,
 		PeriodType:        periodType,
@@ -89,6 +95,8 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 		SummaryContent:    aiContent,
 		SuggestionContent: "",
 		Location:          locationBreakdown,
+		LastUpdatedBy:     modifierID,
+		LastUpdatedAt:     now,
 	}
 
 	existingAI, err := svcCtx.Repos.Summary.FindByPeriodAndSource(ctx, userID, periodType, periodStartStr, constvar.SummarySourceAI)
@@ -100,6 +108,8 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 			"summary_content":    aiContent,
 			"suggestion_content": "",
 			"location":           locationBreakdown,
+			"last_updated_by":    modifierID,
+			"last_updated_at":    now,
 		})
 	}
 	return svcCtx.Repos.Summary.Create(ctx, s)

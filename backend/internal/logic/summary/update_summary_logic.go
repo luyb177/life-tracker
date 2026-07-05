@@ -6,8 +6,10 @@ package summary
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
+	"github.com/luyb177/life-tracker/backend/internal/constvar"
 	"github.com/luyb177/life-tracker/backend/internal/middleware"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 	"github.com/luyb177/life-tracker/backend/internal/types"
@@ -58,10 +60,11 @@ func (l *UpdateSummaryLogic) UpdateSummary(req *types.UpdateSummaryReq) (*types.
 	if req.Title != "" {
 		updates["title"] = strings.TrimSpace(req.Title)
 	}
-
 	if len(updates) == 0 && req.Tags == nil {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)
 	}
+	updates["last_updated_by"] = authUser.UserID
+	updates["last_updated_at"] = time.Now().In(constvar.TimeLocation)
 
 	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {
 		// 标签替换
@@ -75,11 +78,9 @@ func (l *UpdateSummaryLogic) UpdateSummary(req *types.UpdateSummaryReq) (*types.
 			}
 		}
 
-		if len(updates) > 0 {
-			if err := l.svcCtx.Repos.Summary.Update(l.ctx, req.ID, updates, tx); err != nil {
-				l.Errorf("update summary failed: %v", err)
-				return errorx.WrapDBUpdate("更新总结失败", err)
-			}
+		if err := l.svcCtx.Repos.Summary.Update(l.ctx, req.ID, updates, tx); err != nil {
+			l.Errorf("update summary failed: %v", err)
+			return errorx.WrapDBUpdate("更新总结失败", err)
 		}
 		return nil
 	}); err != nil {

@@ -51,7 +51,7 @@ func (l *GenerateAISummaryLogic) GenerateAISummary(req *types.GenerateAISummaryR
 	periodStartKey := periodStart.Format("2006-01-02")
 
 	// 调用真实 AI 总结流程
-	if err := cronSummary.Run(l.ctx, l.svcCtx, req.PeriodType, authUser.UserID, periodStart); err != nil {
+	if err := cronSummary.Run(l.ctx, l.svcCtx, req.PeriodType, authUser.UserID, periodStart, authUser.UserID); err != nil {
 		l.Errorf("run ai summary failed: %v", err)
 		return nil, errorx.WrapInternal("AI 总结生成失败", err)
 	}
@@ -76,18 +76,5 @@ func (l *GenerateAISummaryLogic) GenerateAISummary(req *types.GenerateAISummaryR
 		tagInfos = []types.TagInfo{}
 	}
 
-	return &types.SummaryInfo{
-		ID:                s.ID,
-		PeriodType:        s.PeriodType,
-		PeriodStart:       s.PeriodStart,
-		PeriodEnd:         s.PeriodEnd,
-		Source:            s.Source,
-		SummaryContent:    s.SummaryContent,
-		SuggestionContent: s.SuggestionContent,
-		Title:             s.Title,
-		Tags:              tagInfos,
-		Location:          s.Location,
-		CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),
-	}, nil
+	return new(summaryToInfo(s, tagInfos)), nil
 }

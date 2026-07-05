@@ -77,15 +77,18 @@ type ExpenseCategoryStat struct {
 }
 
 type ExpenseLogInfo struct {
-	ID         uint64              `json:"id"`
-	Category   ExpenseCategoryInfo `json:"category"`
-	Amount     int64               `json:"amount"` // 单位：分
-	Note       string              `json:"note"`
-	Location   string              `json:"location,optional"`
-	OccurredAt string              `json:"occurred_at"`
-	Status     uint8               `json:"status"` // 0=正常, 1=已退款
-	RefundedAt string              `json:"refunded_at,optional"`
-	CreatedAt  string              `json:"created_at"`
+	ID            uint64              `json:"id"`
+	Category      ExpenseCategoryInfo `json:"category"`
+	Amount        int64               `json:"amount"` // 单位：分
+	Note          string              `json:"note"`
+	Location      string              `json:"location,optional"`
+	OccurredAt    string              `json:"occurred_at"`
+	Status        uint8               `json:"status"` // 0=正常, 1=已退款
+	RefundedAt    string              `json:"refunded_at,optional"`
+	CreatedAt     string              `json:"created_at"`
+	UpdatedAt     string              `json:"updated_at"`
+	LastUpdatedBy uint64              `json:"last_updated_by"`
+	LastUpdatedAt string              `json:"last_updated_at"`
 }
 
 type ExpenseMonthlyTrendResp struct {
@@ -137,12 +140,14 @@ type LifeLogByDateResp struct {
 }
 
 type LifeLogInfo struct {
-	ID         uint64    `json:"id"`
-	Content    string    `json:"content"`
-	Tags       []TagInfo `json:"tags,optional"`
-	OccurredAt string    `json:"occurred_at"`
-	CreatedAt  string    `json:"created_at"`
-	UpdatedAt  string    `json:"updated_at"`
+	ID            uint64    `json:"id"`
+	Content       string    `json:"content"`
+	Tags          []TagInfo `json:"tags,optional"`
+	OccurredAt    string    `json:"occurred_at"`
+	CreatedAt     string    `json:"created_at"`
+	UpdatedAt     string    `json:"updated_at"`
+	LastUpdatedBy uint64    `json:"last_updated_by"`
+	LastUpdatedAt string    `json:"last_updated_at"`
 }
 
 type ListExpenseCategoryResp struct {
@@ -249,6 +254,8 @@ type SummaryInfo struct {
 	Location          string    `json:"location,optional"`
 	CreatedAt         string    `json:"created_at"`
 	UpdatedAt         string    `json:"updated_at"`
+	LastUpdatedBy     uint64    `json:"last_updated_by"`
+	LastUpdatedAt     string    `json:"last_updated_at"`
 }
 
 type SummaryRangeReq struct {

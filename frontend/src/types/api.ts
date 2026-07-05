@@ -33,6 +33,9 @@ export interface LifeLogInfo {
   tags?: TagInfo[]
   occurred_at: string
   created_at: string
+  updated_at: string
+  last_updated_by: number
+  last_updated_at: string
 }
 
 export interface ExpenseCategoryInfo {
@@ -51,6 +54,9 @@ export interface ExpenseLogInfo {
   status: number
   refunded_at?: string
   created_at: string
+  updated_at: string
+  last_updated_by: number
+  last_updated_at: string
 }
 
 export interface SummaryInfo {
@@ -66,6 +72,8 @@ export interface SummaryInfo {
   location?: string
   created_at: string
   updated_at: string
+  last_updated_by: number
+  last_updated_at: string
 }
 
 export interface CursorList<T> {

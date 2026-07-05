@@ -3,12 +3,21 @@ package lifelog
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
+	"github.com/luyb177/life-tracker/backend/internal/constvar"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 	"github.com/luyb177/life-tracker/backend/internal/types"
 	"gorm.io/gorm"
 )
+
+func formatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.In(constvar.TimeLocation).Format(time.DateTime)
+}
 
 // resolveTags 解析标签列表：id==0 则按名称创建标签，id>0 则验证标签存在
 func resolveTags(ctx context.Context, svcCtx *svc.ServiceContext, tags []types.TagInfo, tx ...*gorm.DB) ([]uint64, error) {

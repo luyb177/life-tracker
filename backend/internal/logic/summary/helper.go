@@ -145,5 +145,14 @@ func summaryToInfo(s *summary.Summary, tagInfos []types.TagInfo) types.SummaryIn
 		Location:          s.Location,
 		CreatedAt:         s.CreatedAt.Format("2006-01-02 15:04:05"),
 		UpdatedAt:         s.UpdatedAt.Format("2006-01-02 15:04:05"),
+		LastUpdatedBy:     s.LastUpdatedBy,
+		LastUpdatedAt:     formatSummaryTime(s.LastUpdatedAt),
 	}
+}
+
+func formatSummaryTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.In(constvar.TimeLocation).Format(time.DateTime)
 }

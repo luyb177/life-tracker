@@ -38,6 +38,9 @@ type Log struct {
 	OccurredAt time.Time  `gorm:"index:idx_user_date;type:datetime"`
 	Status     uint8      `gorm:"type:tinyint unsigned;default:0"` // 0=正常, 1=已退款
 	RefundedAt *time.Time `gorm:"type:datetime"`                   // 退款时间
+
+	LastUpdatedBy uint64    `gorm:"type:bigint unsigned;default:0"`
+	LastUpdatedAt time.Time `gorm:"type:datetime(3)"`
 }
 
 func (Log) TableName() string {

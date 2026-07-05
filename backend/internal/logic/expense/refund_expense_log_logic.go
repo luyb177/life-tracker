@@ -46,7 +46,7 @@ func (l *RefundExpenseLogLogic) RefundExpenseLog(req *types.RefundExpenseLogReq)
 		return nil, errorx.WrapBadRequest("该记录已退款", nil)
 	}
 
-	if err := l.svcCtx.Repos.Expense.RefundLog(l.ctx, req.ID); err != nil {
+	if err := l.svcCtx.Repos.Expense.RefundLog(l.ctx, req.ID, authUser.UserID); err != nil {
 		l.Errorf("refund expense log failed: %v", err)
 		return nil, errorx.WrapDBUpdate("退款失败", err)
 	}

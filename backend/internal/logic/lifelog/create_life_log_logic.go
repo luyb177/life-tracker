@@ -53,9 +53,11 @@ func (l *CreateLifeLogLogic) CreateLifeLog(req *types.CreateLifeLogReq) (resp *t
 	}
 
 	log := &lifelog.LifeLog{
-		UserID:     authUser.UserID,
-		Content:    strings.TrimSpace(req.Content),
-		OccurredAt: occurredAt,
+		UserID:        authUser.UserID,
+		Content:       strings.TrimSpace(req.Content),
+		OccurredAt:    occurredAt,
+		LastUpdatedBy: authUser.UserID,
+		LastUpdatedAt: time.Now().In(constvar.TimeLocation),
 	}
 
 	if err := l.svcCtx.Repos.Transaction(func(tx *gorm.DB) error {

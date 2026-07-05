@@ -42,6 +42,8 @@ type (
 		Location          string    `json:"location,optional"`
 		CreatedAt         string    `json:"created_at"`
 		UpdatedAt         string    `json:"updated_at"`
+		LastUpdatedBy     uint64    `json:"last_updated_by"`
+		LastUpdatedAt     string    `json:"last_updated_at"`
 	}
 )
 
@@ -256,6 +258,9 @@ type (
 		Status     uint8               `json:"status"` // 0=正常, 1=已退款
 		RefundedAt string              `json:"refunded_at,optional"`
 		CreatedAt  string              `json:"created_at"`
+		UpdatedAt  string              `json:"updated_at"`
+		LastUpdatedBy uint64           `json:"last_updated_by"`
+		LastUpdatedAt string           `json:"last_updated_at"`
 	}
 	CreateExpenseCategoryReq {
 		Name string `json:"name"`
@@ -396,6 +401,8 @@ type (
 		OccurredAt string    `json:"occurred_at"`
 		CreatedAt  string    `json:"created_at"`
 		UpdatedAt  string    `json:"updated_at"`
+		LastUpdatedBy uint64  `json:"last_updated_by"`
+		LastUpdatedAt string  `json:"last_updated_at"`
 	}
 	CreateLifeLogReq {
 		Content    string    `json:"content"`
@@ -457,4 +464,3 @@ service life_tracker {
 	@handler LifeLogByDate
 	get /by_date (LifeLogByDateReq) returns (LifeLogByDateResp)
 }
-

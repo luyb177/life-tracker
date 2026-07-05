@@ -64,8 +64,9 @@ Both share the same `ServiceContext` and config file.
 
 Daily activity records live in the `life_logs` table and are exposed through `/api/v1/life_log/*`.
 The `summaries` table is only for periodic review content:
-- `source=2` (user): manual period summaries. The current backend allows one user summary per user+period_type+period_start.
+- `source=2` (user): manual period summaries. One user summary per user+period_type+period_start.
 - `source=1` (AI): auto-generated period summaries. One AI summary per user+period_type+period_start.
+- `last_updated_by` / `last_updated_at` record who last changed the content and when. Scheduled AI jobs use `last_updated_by=0`.
 
 ### Summary period model
 
@@ -125,5 +126,5 @@ Logic returns `(*Resp, error)` where `error` is `*errorx.AppError`. Only handler
 
 The frontend (Vue 3 + Naive UI) is being rewritten. The backend API is stable. Key frontend integration points:
 - `GET /api/v1/summary/day` returns mixed user+AI records — group by `source` when displaying.
-- Multiple user summaries per day is intentional — don't assume "one per day" on the frontend.
+- For the same user+period_type+period_start, there can be at most one record per source.
 - For week/month/year summaries that already exist, guide users to edit instead of re-creating.

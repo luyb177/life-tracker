@@ -14,6 +14,13 @@ func formatTimePtr(t *time.Time, loc *time.Location) string {
 	return t.In(loc).Format(time.DateTime)
 }
 
+func formatTime(t time.Time, loc *time.Location) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.In(loc).Format(time.DateTime)
+}
+
 func parseDateRange(startStr, endStr string) (time.Time, time.Time, error) {
 	start, err := time.ParseInLocation("2006-01-02", startStr, constvar.TimeLocation)
 	if err != nil {

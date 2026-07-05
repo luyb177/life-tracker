@@ -64,15 +64,18 @@ func (l *ExpenseByDateLogic) ExpenseByDate(req *types.ExpenseByDateReq) (*types.
 			total += log.Amount
 		}
 		items = append(items, types.ExpenseLogInfo{
-			ID:         log.ID,
-			Category:   categoryMap[log.CategoryID],
-			Amount:     log.Amount,
-			Note:       log.Note,
-			Location:   log.Location,
-			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
-			Status:     log.Status,
-			RefundedAt: formatTimePtr(log.RefundedAt, constvar.TimeLocation),
-			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			ID:            log.ID,
+			Category:      categoryMap[log.CategoryID],
+			Amount:        log.Amount,
+			Note:          log.Note,
+			Location:      log.Location,
+			OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
+			Status:        log.Status,
+			RefundedAt:    formatTimePtr(log.RefundedAt, constvar.TimeLocation),
+			CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			LastUpdatedBy: log.LastUpdatedBy,
+			LastUpdatedAt: formatTime(log.LastUpdatedAt, constvar.TimeLocation),
 		})
 	}
 

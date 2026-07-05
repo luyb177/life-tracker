@@ -79,6 +79,8 @@ func (l *UpdateExpenseLogLogic) UpdateExpenseLog(req *types.UpdateExpenseLogReq)
 	if len(updates) == 0 {
 		return nil, errorx.WrapBadRequest("没有可更新的字段", nil)
 	}
+	updates["last_updated_by"] = authUser.UserID
+	updates["last_updated_at"] = time.Now().In(constvar.TimeLocation)
 
 	if err := l.svcCtx.Repos.Expense.UpdateLog(l.ctx, req.ID, updates); err != nil {
 		l.Errorf("update expense log failed: %v", err)

@@ -20,7 +20,7 @@ type Repository interface {
 	UpdateLog(ctx context.Context, id uint64, updates map[string]interface{}, tx ...*gorm.DB) error
 	DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
 	FindLogByID(ctx context.Context, id uint64, tx ...*gorm.DB) (*Log, error)
-	RefundLog(ctx context.Context, id uint64, tx ...*gorm.DB) error
+	RefundLog(ctx context.Context, id uint64, lastUpdatedBy uint64, tx ...*gorm.DB) error
 	ListLogsByUser(ctx context.Context, userID uint64, cursorID uint64, cursorTime time.Time, limit int, tx ...*gorm.DB) ([]*Log, error)
 	// SumByDate 汇总某用户指定日期的总支出（单位：分）
 	SumByDate(ctx context.Context, userID uint64, date time.Time, tx ...*gorm.DB) (int64, error)
@@ -111,11 +111,13 @@ func (r *repo) DeleteLog(ctx context.Context, id uint64, tx ...*gorm.DB) error {
 	return r.getDB(ctx, tx...).Delete(&Log{}, id).Error
 }
 
-func (r *repo) RefundLog(ctx context.Context, id uint64, tx ...*gorm.DB) error {
+func (r *repo) RefundLog(ctx context.Context, id uint64, lastUpdatedBy uint64, tx ...*gorm.DB) error {
 	now := time.Now()
 	return r.getDB(ctx, tx...).Model(&Log{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"status":      1,
-		"refunded_at": now,
+		"status":          1,
+		"refunded_at":     now,
+		"last_updated_by": lastUpdatedBy,
+		"last_updated_at": now,
 	}).Error
 }
 

@@ -76,12 +76,14 @@ func (l *CreateExpenseLogLogic) CreateExpenseLog(req *types.CreateExpenseLogReq)
 	}
 
 	log := &expense.Log{
-		UserID:     authUser.UserID,
-		CategoryID: req.CategoryID,
-		Amount:     req.Amount,
-		Note:       note,
-		Location:   locStr,
-		OccurredAt: occurredAt,
+		UserID:        authUser.UserID,
+		CategoryID:    req.CategoryID,
+		Amount:        req.Amount,
+		Note:          note,
+		Location:      locStr,
+		OccurredAt:    occurredAt,
+		LastUpdatedBy: authUser.UserID,
+		LastUpdatedAt: time.Now().In(constvar.TimeLocation),
 	}
 
 	if err := l.svcCtx.Repos.Expense.CreateLog(l.ctx, log); err != nil {

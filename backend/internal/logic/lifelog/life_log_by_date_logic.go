@@ -72,12 +72,14 @@ func (l *LifeLogByDateLogic) LifeLogByDate(req *types.LifeLogByDateReq) (resp *t
 			tagInfos = append(tagInfos, types.TagInfo{ID: t.ID, Name: t.Name})
 		}
 		items = append(items, types.LifeLogInfo{
-			ID:         log.ID,
-			Content:    log.Content,
-			Tags:       tagInfos,
-			OccurredAt: log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
-			CreatedAt:  log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			UpdatedAt:  log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			ID:            log.ID,
+			Content:       log.Content,
+			Tags:          tagInfos,
+			OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
+			CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
+			LastUpdatedBy: log.LastUpdatedBy,
+			LastUpdatedAt: formatTime(log.LastUpdatedAt),
 		})
 	}
 
