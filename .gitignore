@@ -1,0 +1,51 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+logs/
+**/logs/
+tmp/
+temp/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Backend config
+backend/etc/*.yaml
+!backend/etc/*.example.yaml
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+vendor/
+go.work
+go.work.sum
+
+# Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Docker/local deployment overrides
+.dockerignored
+docker-compose.override.yaml

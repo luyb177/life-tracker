@@ -1,57 +1,36 @@
-# Binaries
+# Binaries and build artifacts
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-bin/
-
-# Test binary
 *.test
-
-# Output of go coverage tool
 *.out
+bin/
+dist/
 
-# Go workspace
+# Go workspace/deps
+vendor/
 go.work
 go.work.sum
 
-# Dependency directories
-vendor/
+# Local config and secrets
+etc/*.yaml
+!etc/*.example.yaml
+.env
+.env.*
+*.env
 
-# Build artifacts
-dist/
+# Logs and temp
+*.log
+logs/
+tmp/
+temp/
 
-# IDE files
+# Editors/OS
 .idea/
 .vscode/
 *.swp
 *.swo
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# Log files
-*.log
-**/logs
-
-# Docker
-.dockerignored
-docker-compose.yaml
-
-# Environment files
-.env
-.env.local
-*.env
-
-# Temporary files
-tmp/
-temp/
-
-# config
-*.yaml
-!*.example.yaml
-!example.yaml
-*/etc/*.yaml
-!*/etc/*.example.yaml
