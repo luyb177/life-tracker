@@ -3,7 +3,10 @@ export function yuanToFen(value: number | null) {
   return Math.round(value * 100)
 }
 
+export function fenToYuan(fen = 0) {
+  return Number((fen / 100).toFixed(2))
+}
+
 export function formatYuan(fen = 0) {
   return `¥${(fen / 100).toFixed(2)}`
 }
-

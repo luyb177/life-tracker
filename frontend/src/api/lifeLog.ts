@@ -11,6 +11,10 @@ export function createLifeLog(payload: CreateLifeLogPayload) {
   return unwrap<IDResponse>(http.post('/life_log/create', payload))
 }
 
+export function updateLifeLog(payload: Partial<CreateLifeLogPayload> & { id: number }) {
+  return unwrap<Record<string, never>>(http.post('/life_log/update', payload))
+}
+
 export function getLifeLogsByDate(date: string) {
   return unwrap<{ list: LifeLogInfo[] }>(http.get('/life_log/by_date', { params: { date } }))
 }
@@ -22,4 +26,3 @@ export function listLifeLogs(params: { page_size: number; page_token?: string })
 export function deleteLifeLog(id: number) {
   return unwrap<Record<string, never>>(http.post('/life_log/delete', { id }))
 }
-

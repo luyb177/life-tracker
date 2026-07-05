@@ -1,11 +1,11 @@
 <template>
-  <section class="panel summary-preview">
+  <section class="panel summary-preview" :class="{ interactive: Boolean(summary) }" @click="summary && $emit('open', summary)">
     <div class="section-title-row">
       <div>
         <p class="eyebrow">AI</p>
         <h2>今日总结</h2>
       </div>
-      <n-button size="small" secondary :loading="loading" @click="$emit('generate')">
+      <n-button size="small" secondary :loading="loading" @click.stop="$emit('generate')">
         生成
       </n-button>
     </div>
@@ -32,7 +32,7 @@ import type { SummaryInfo } from '@/types/api'
 import { renderMarkdown } from '@/utils/markdown'
 
 const props = defineProps<{ summary?: SummaryInfo | null; loading?: boolean }>()
-defineEmits<{ generate: [] }>()
+defineEmits<{ generate: []; open: [summary: SummaryInfo] }>()
 
 const summaryHtml = computed(() => renderMarkdown(props.summary?.summary_content || ''))
 const suggestionHtml = computed(() => renderMarkdown(props.summary?.suggestion_content || ''))

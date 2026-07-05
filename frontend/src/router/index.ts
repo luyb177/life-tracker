@@ -12,6 +12,12 @@ const router = createRouter({
       meta: { guest: true }
     },
     {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/pages/RegisterPage.vue'),
+      meta: { guest: true }
+    },
+    {
       path: '/',
       component: AppLayout,
       meta: { requiresAuth: true },
@@ -34,4 +40,3 @@ router.beforeEach((to) => {
 })
 
 export default router
-

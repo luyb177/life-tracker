@@ -7,6 +7,8 @@ export const http = axios.create({
   timeout: 15000
 })
 
+type RetryableRequestConfig = AxiosRequestConfig & { _retried?: boolean }
+
 http.interceptors.request.use((config) => {
   const auth = useAuthStore()
   if (auth.token) {
@@ -25,8 +27,9 @@ http.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const auth = useAuthStore()
-    const original = error.config as (AxiosRequestConfig & { _retried?: boolean }) | undefined
-    if (error.response?.status === 401 && auth.refreshToken && original && !original._retried) {
+    const original = error.config as RetryableRequestConfig | undefined
+    const isRefreshRequest = original?.url?.includes('/auth/refresh')
+    if (error.response?.status === 401 && auth.refreshToken && original && !original._retried && !isRefreshRequest) {
       original._retried = true
       try {
         await auth.refresh()
@@ -37,7 +40,12 @@ http.interceptors.response.use(
         return http(original)
       } catch {
         auth.logout()
+        redirectToLogin()
       }
+    }
+    if (error.response?.status === 401 && isRefreshRequest) {
+      auth.logout()
+      redirectToLogin()
     }
     return Promise.reject(error)
   }
@@ -48,3 +56,8 @@ export async function unwrap<T>(request: Promise<{ data: ApiEnvelope<T> }>): Pro
   return response.data.data
 }
 
+function redirectToLogin() {
+  if (window.location.pathname !== '/login') {
+    window.location.assign('/login')
+  }
+}

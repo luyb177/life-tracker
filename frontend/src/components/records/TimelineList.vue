@@ -16,7 +16,13 @@
     />
 
     <div v-else class="timeline today-timeline-list">
-      <article v-for="item in items" :key="item.id" class="timeline-item" :class="[item.type, { refunded: item.refunded }]">
+      <article
+        v-for="item in items"
+        :key="item.id"
+        class="timeline-item"
+        :class="[item.type, { refunded: item.refunded }]"
+        @click="$emit('select', item)"
+      >
         <div class="timeline-time">{{ item.time }}</div>
         <div>
           <div class="timeline-title-row">
@@ -29,7 +35,7 @@
                 size="tiny"
                 tertiary
                 type="error"
-                @click="$emit('refund', item.sequence)"
+                @click.stop="$emit('refund', item.sequence)"
               >
                 退款
               </n-button>
@@ -65,5 +71,5 @@ export interface TimelineItem {
 }
 
 defineProps<{ items: TimelineItem[] }>()
-defineEmits<{ refund: [id: number] }>()
+defineEmits<{ refund: [id: number]; select: [item: TimelineItem] }>()
 </script>

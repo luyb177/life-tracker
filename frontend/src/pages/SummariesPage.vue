@@ -24,7 +24,12 @@
       />
 
       <div v-else class="summary-list">
-        <article v-for="summary in summaries" :key="summary.id" class="summary-card">
+        <article
+          v-for="summary in summaries"
+          :key="summary.id"
+          class="summary-card interactive-summary"
+          @click="openSummaryDetail(summary)"
+        >
           <div class="summary-card-header">
             <div>
               <strong class="summary-period">{{ summaryPeriodTitle(summary) }}</strong>
@@ -83,6 +88,44 @@
         </n-button>
       </template>
     </n-modal>
+
+    <n-modal v-model:show="showDetailModal" preset="dialog" title="总结详情" class="detail-modal">
+      <n-form class="detail-form" :show-label="true" label-placement="top">
+        <n-form-item label="标题">
+          <n-input v-model:value="detailForm.title" />
+        </n-form-item>
+        <n-form-item label="总结内容">
+          <n-input
+            v-model:value="detailForm.summary_content"
+            type="textarea"
+            :autosize="{ minRows: 6, maxRows: 12 }"
+          />
+        </n-form-item>
+        <n-form-item label="建议">
+          <n-input
+            v-model:value="detailForm.suggestion_content"
+            type="textarea"
+            :autosize="{ minRows: 3, maxRows: 8 }"
+          />
+        </n-form-item>
+        <p v-if="selectedSummary" class="detail-meta">
+          {{ periodLabel(selectedSummary.period_type) }} · {{ selectedSummary.source === 1 ? 'AI' : '用户' }} · 更新
+          {{ selectedSummary.last_updated_at || selectedSummary.updated_at }}
+        </p>
+      </n-form>
+      <template #action>
+        <n-button tertiary type="error" :loading="savingDetail" @click="deleteSelectedSummary">删除</n-button>
+        <n-button @click="showDetailModal = false">取消</n-button>
+        <n-button
+          type="primary"
+          :loading="savingDetail"
+          :disabled="!detailForm.summary_content.trim()"
+          @click="saveSelectedSummary"
+        >
+          保存
+        </n-button>
+      </template>
+    </n-modal>
   </div>
 </template>
 
@@ -92,7 +135,7 @@ import { useMessage } from 'naive-ui'
 import { Sparkles } from '@lucide/vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { createSummary, generateAISummary, listSummaries } from '@/api/summary'
+import { createSummary, deleteSummary, generateAISummary, listSummaries, updateSummary } from '@/api/summary'
 import type { SummaryInfo } from '@/types/api'
 import { addDays, formatDate, isFutureDateTimestamp, monthEndExclusive, monthStart, nextYearStart } from '@/utils/date'
 import { renderMarkdown } from '@/utils/markdown'
@@ -103,12 +146,16 @@ const summaries = ref<SummaryInfo[]>([])
 const loading = ref(false)
 const generating = ref(false)
 const showManualModal = ref(false)
+const showDetailModal = ref(false)
 const creatingManual = ref(false)
+const savingDetail = ref(false)
+const selectedSummary = ref<SummaryInfo | null>(null)
 const manualPeriodType = ref(1)
 const manualPeriodStart = ref(formatDate())
 const manualTitle = ref('')
 const manualContent = ref('')
 const manualSuggestion = ref('')
+const detailForm = ref({ title: '', summary_content: '', suggestion_content: '' })
 
 const periodOptions = [
   { label: '日', value: 1 },
@@ -179,6 +226,16 @@ function openManualSummary() {
   showManualModal.value = true
 }
 
+function openSummaryDetail(summary: SummaryInfo) {
+  selectedSummary.value = summary
+  detailForm.value = {
+    title: summary.title || '',
+    summary_content: summary.summary_content,
+    suggestion_content: summary.suggestion_content || ''
+  }
+  showDetailModal.value = true
+}
+
 async function load() {
   loading.value = true
   try {
@@ -225,6 +282,41 @@ async function createManualSummary() {
     message.error(error instanceof Error ? error.message : '保存手动总结失败')
   } finally {
     creatingManual.value = false
+  }
+}
+
+async function saveSelectedSummary() {
+  if (!selectedSummary.value || !detailForm.value.summary_content.trim()) return
+  savingDetail.value = true
+  try {
+    await updateSummary({
+      id: selectedSummary.value.id,
+      title: detailForm.value.title.trim(),
+      summary_content: detailForm.value.summary_content.trim(),
+      suggestion_content: detailForm.value.suggestion_content.trim()
+    })
+    message.success('总结已更新')
+    showDetailModal.value = false
+    await load()
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '更新失败')
+  } finally {
+    savingDetail.value = false
+  }
+}
+
+async function deleteSelectedSummary() {
+  if (!selectedSummary.value || !window.confirm('确认删除这条总结吗？')) return
+  savingDetail.value = true
+  try {
+    await deleteSummary(selectedSummary.value.id)
+    message.success('总结已删除')
+    showDetailModal.value = false
+    await load()
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : '删除失败')
+  } finally {
+    savingDetail.value = false
   }
 }
 

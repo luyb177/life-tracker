@@ -526,6 +526,21 @@ textarea {
   box-shadow: 0 10px 28px rgba(35, 49, 45, 0.08);
 }
 
+.interactive-record,
+.interactive-summary {
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.interactive-record:hover,
+.interactive-summary:hover {
+  transform: scale(1.012);
+  box-shadow: 0 14px 34px rgba(35, 49, 45, 0.13);
+}
+
 .summary-card::before {
   content: "";
   position: absolute;
@@ -646,6 +661,16 @@ textarea {
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 8px 22px rgba(35, 49, 45, 0.07);
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.today-timeline-list .timeline-item:hover {
+  transform: scale(1.015);
+  box-shadow: 0 14px 34px rgba(35, 49, 45, 0.13);
 }
 
 .today-timeline-list .timeline-item::before {
@@ -678,6 +703,42 @@ textarea {
   --timeline-accent: #4d8a45;
   border-color: #b8d3b2;
   background: #f5faf3;
+}
+
+.summary-preview.interactive {
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.summary-preview.interactive:hover {
+  transform: scale(1.01);
+  box-shadow: 0 14px 34px rgba(35, 49, 45, 0.12);
+  border-color: #9fcfc2;
+}
+
+.detail-form {
+  display: grid;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.detail-two-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.full-control {
+  width: 100%;
+}
+
+.detail-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .record-row time {
@@ -759,6 +820,18 @@ textarea {
 .auth-form p {
   margin: -8px 0 4px;
   color: var(--muted);
+}
+
+.auth-switch {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.auth-switch a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 @media (max-width: 1023px) {
@@ -888,6 +961,10 @@ textarea {
   }
 
   .expense-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-two-columns {
     grid-template-columns: 1fr;
   }
 

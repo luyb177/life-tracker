@@ -20,6 +20,14 @@ export function createExpense(payload: CreateExpensePayload) {
   return unwrap<IDResponse>(http.post('/expense/create', payload))
 }
 
+export function updateExpense(payload: Partial<CreateExpensePayload> & { id: number }) {
+  return unwrap<Record<string, never>>(http.post('/expense/update', payload))
+}
+
+export function deleteExpense(id: number) {
+  return unwrap<Record<string, never>>(http.post('/expense/delete', { id }))
+}
+
 export function listExpenseCategories() {
   return unwrap<{ categories: ExpenseCategoryInfo[] }>(http.get('/expense/categories'))
 }

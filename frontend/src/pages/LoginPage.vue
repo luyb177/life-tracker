@@ -20,6 +20,10 @@
           placeholder="密码"
         />
         <n-button type="primary" block :loading="loading" @click="submit">登录</n-button>
+        <p class="auth-switch">
+          还没有账号？
+          <RouterLink to="/register">去注册</RouterLink>
+        </p>
       </n-form>
     </section>
   </main>
@@ -51,4 +55,3 @@ async function submit() {
   }
 }
 </script>
-

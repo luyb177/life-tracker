@@ -27,7 +27,14 @@ export function createSummary(payload: CreateSummaryPayload) {
   return unwrap<IDResponse>(http.post('/summary/create', payload))
 }
 
+export function updateSummary(payload: Partial<Pick<CreateSummaryPayload, 'summary_content' | 'suggestion_content' | 'title' | 'tags'>> & { id: number }) {
+  return unwrap<Record<string, never>>(http.post('/summary/update', payload))
+}
+
+export function deleteSummary(id: number) {
+  return unwrap<Record<string, never>>(http.post('/summary/delete', { id }))
+}
+
 export function generateAISummary(period_type: number, period_start: string) {
   return unwrap<SummaryInfo>(http.post('/summary/generate', { period_type, period_start }))
 }
-
