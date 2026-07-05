@@ -89,43 +89,13 @@
       </template>
     </n-modal>
 
-    <n-modal v-model:show="showDetailModal" preset="dialog" title="总结详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="标题">
-          <n-input v-model:value="detailForm.title" />
-        </n-form-item>
-        <n-form-item label="总结内容">
-          <n-input
-            v-model:value="detailForm.summary_content"
-            type="textarea"
-            :autosize="{ minRows: 6, maxRows: 12 }"
-          />
-        </n-form-item>
-        <n-form-item label="建议">
-          <n-input
-            v-model:value="detailForm.suggestion_content"
-            type="textarea"
-            :autosize="{ minRows: 3, maxRows: 8 }"
-          />
-        </n-form-item>
-        <p v-if="selectedSummary" class="detail-meta">
-          {{ periodLabel(selectedSummary.period_type) }} · {{ selectedSummary.source === 1 ? 'AI' : '用户' }} · 更新
-          {{ selectedSummary.last_updated_at || selectedSummary.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="savingDetail" @click="deleteSelectedSummary">删除</n-button>
-        <n-button @click="showDetailModal = false">取消</n-button>
-        <n-button
-          type="primary"
-          :loading="savingDetail"
-          :disabled="!detailForm.summary_content.trim()"
-          @click="saveSelectedSummary"
-        >
-          保存
-        </n-button>
-      </template>
-    </n-modal>
+    <SummaryDetailModal
+      v-model:show="showDetailModal"
+      :summary="selectedSummary"
+      :loading="savingDetail"
+      @save="saveSelectedSummary"
+      @delete="deleteSelectedSummary"
+    />
   </div>
 </template>
 
@@ -135,10 +105,19 @@ import { useMessage } from 'naive-ui'
 import { Sparkles } from '@lucide/vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import SummaryDetailModal from '@/components/summary/SummaryDetailModal.vue'
 import { createSummary, deleteSummary, generateAISummary, listSummaries, updateSummary } from '@/api/summary'
 import type { SummaryInfo } from '@/types/api'
-import { addDays, formatDate, isFutureDateTimestamp, monthEndExclusive, monthStart, nextYearStart } from '@/utils/date'
+import { formatDate, isFutureDateTimestamp } from '@/utils/date'
 import { renderMarkdown } from '@/utils/markdown'
+import {
+  currentPeriodStart,
+  normalizePeriodStart,
+  periodEnd,
+  summaryPeriodOptions,
+  summaryPeriodRange,
+  summaryPeriodTitle
+} from '@/utils/summary'
 
 const message = useMessage()
 const periodType = ref(1)
@@ -155,71 +134,15 @@ const manualPeriodStart = ref(formatDate())
 const manualTitle = ref('')
 const manualContent = ref('')
 const manualSuggestion = ref('')
-const detailForm = ref({ title: '', summary_content: '', suggestion_content: '' })
-
-const periodOptions = [
-  { label: '日', value: 1 },
-  { label: '周', value: 2 },
-  { label: '月', value: 3 },
-  { label: '年', value: 4 }
-]
-
-function periodLabel(type: number) {
-  return ['未知', '日报', '周报', '月报', '年报'][type] || '总结'
-}
+const periodOptions = summaryPeriodOptions
 
 function renderSummaryMarkdown(content = '') {
   return renderMarkdown(content)
 }
 
-function summaryPeriodTitle(summary: SummaryInfo) {
-  if (summary.period_type === 1) return summary.period_start
-  if (summary.period_type === 3) return summary.period_start.slice(0, 7)
-  if (summary.period_type === 4) return summary.period_start.slice(0, 4)
-  return summaryPeriodRange(summary)
-}
-
-function summaryPeriodRange(summary: SummaryInfo) {
-  return `${summary.period_start} 至 ${summary.period_end}`
-}
-
-function currentPeriodStart() {
-  const today = new Date()
-  if (periodType.value === 3) return monthStart(today)
-  if (periodType.value === 4) return `${today.getFullYear()}-01-01`
-  if (periodType.value === 2) {
-    const day = today.getDay() || 7
-    today.setDate(today.getDate() - day + 1)
-  }
-  return formatDate(today)
-}
-
-function normalizeManualStart(periodType: number, dateText: string) {
-  const date = new Date(`${dateText}T00:00:00`)
-  if (periodType === 2) {
-    const day = date.getDay() || 7
-    date.setDate(date.getDate() - day + 1)
-  }
-  if (periodType === 3) {
-    date.setDate(1)
-  }
-  if (periodType === 4) {
-    date.setMonth(0, 1)
-  }
-  return formatDate(date)
-}
-
-function manualPeriodEnd(periodType: number, start: string) {
-  const startDate = new Date(`${start}T00:00:00`)
-  if (periodType === 1) return addDays(start, 1)
-  if (periodType === 2) return addDays(start, 7)
-  if (periodType === 3) return monthEndExclusive(startDate)
-  return nextYearStart(startDate)
-}
-
 function openManualSummary() {
   manualPeriodType.value = periodType.value
-  manualPeriodStart.value = currentPeriodStart()
+  manualPeriodStart.value = currentPeriodStart(periodType.value)
   manualTitle.value = ''
   manualContent.value = ''
   manualSuggestion.value = ''
@@ -228,11 +151,6 @@ function openManualSummary() {
 
 function openSummaryDetail(summary: SummaryInfo) {
   selectedSummary.value = summary
-  detailForm.value = {
-    title: summary.title || '',
-    summary_content: summary.summary_content,
-    suggestion_content: summary.suggestion_content || ''
-  }
   showDetailModal.value = true
 }
 
@@ -250,7 +168,7 @@ async function load() {
 async function generateCurrent() {
   generating.value = true
   try {
-    const summary = await generateAISummary(periodType.value, currentPeriodStart())
+    const summary = await generateAISummary(periodType.value, currentPeriodStart(periodType.value))
     summaries.value = [summary, ...summaries.value]
     message.success('总结已生成')
   } catch (error) {
@@ -265,11 +183,11 @@ async function createManualSummary() {
   if (!content) return
   creatingManual.value = true
   try {
-    const normalizedStart = normalizeManualStart(manualPeriodType.value, manualPeriodStart.value)
+    const normalizedStart = normalizePeriodStart(manualPeriodType.value, manualPeriodStart.value)
     await createSummary({
       period_type: manualPeriodType.value,
       period_start: normalizedStart,
-      period_end: manualPeriodEnd(manualPeriodType.value, normalizedStart),
+      period_end: periodEnd(manualPeriodType.value, normalizedStart),
       title: manualTitle.value.trim() || undefined,
       summary_content: content,
       suggestion_content: manualSuggestion.value.trim() || undefined
@@ -285,16 +203,10 @@ async function createManualSummary() {
   }
 }
 
-async function saveSelectedSummary() {
-  if (!selectedSummary.value || !detailForm.value.summary_content.trim()) return
+async function saveSelectedSummary(payload: { id: number; title: string; summary_content: string; suggestion_content: string }) {
   savingDetail.value = true
   try {
-    await updateSummary({
-      id: selectedSummary.value.id,
-      title: detailForm.value.title.trim(),
-      summary_content: detailForm.value.summary_content.trim(),
-      suggestion_content: detailForm.value.suggestion_content.trim()
-    })
+    await updateSummary(payload)
     message.success('总结已更新')
     showDetailModal.value = false
     await load()
@@ -305,11 +217,11 @@ async function saveSelectedSummary() {
   }
 }
 
-async function deleteSelectedSummary() {
-  if (!selectedSummary.value || !window.confirm('确认删除这条总结吗？')) return
+async function deleteSelectedSummary(id: number) {
+  if (!window.confirm('确认删除这条总结吗？')) return
   savingDetail.value = true
   try {
-    await deleteSummary(selectedSummary.value.id)
+    await deleteSummary(id)
     message.success('总结已删除')
     showDetailModal.value = false
     await load()

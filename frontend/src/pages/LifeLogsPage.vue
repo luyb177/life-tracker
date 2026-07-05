@@ -35,31 +35,13 @@
       </div>
     </section>
 
-    <n-modal v-model:show="showDetailModal" preset="dialog" title="生活记录详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="发生时间">
-          <n-date-picker
-            v-model:formatted-value="editForm.occurred_at"
-            type="datetime"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            class="full-control"
-          />
-        </n-form-item>
-        <n-form-item label="内容">
-          <n-input v-model:value="editForm.content" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
-        </n-form-item>
-        <p v-if="selectedLog" class="detail-meta">
-          创建 {{ selectedLog.created_at }} · 更新 {{ selectedLog.last_updated_at || selectedLog.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="saving" @click="deleteSelected">删除</n-button>
-        <n-button @click="showDetailModal = false">取消</n-button>
-        <n-button type="primary" :loading="saving" :disabled="!editForm.content.trim()" @click="saveSelected">
-          保存
-        </n-button>
-      </template>
-    </n-modal>
+    <LifeLogDetailModal
+      v-model:show="showDetailModal"
+      :log="selectedLog"
+      :loading="saving"
+      @save="saveSelected"
+      @delete="deleteSelected"
+    />
   </div>
 </template>
 
@@ -69,6 +51,7 @@ import { useMessage } from 'naive-ui'
 import { BookOpenText } from '@lucide/vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import LifeLogDetailModal from '@/components/records/LifeLogDetailModal.vue'
 import { deleteLifeLog, getLifeLogsByDate, updateLifeLog } from '@/api/lifeLog'
 import type { LifeLogInfo } from '@/types/api'
 import { formatDate, isFutureDateTimestamp } from '@/utils/date'
@@ -80,26 +63,16 @@ const loading = ref(false)
 const saving = ref(false)
 const showDetailModal = ref(false)
 const selectedLog = ref<LifeLogInfo | null>(null)
-const editForm = ref({ content: '', occurred_at: '' })
 
 function openDetail(log: LifeLogInfo) {
   selectedLog.value = log
-  editForm.value = {
-    content: log.content,
-    occurred_at: log.occurred_at
-  }
   showDetailModal.value = true
 }
 
-async function saveSelected() {
-  if (!selectedLog.value || !editForm.value.content.trim()) return
+async function saveSelected(payload: { id: number; content: string; occurred_at: string }) {
   saving.value = true
   try {
-    await updateLifeLog({
-      id: selectedLog.value.id,
-      content: editForm.value.content.trim(),
-      occurred_at: editForm.value.occurred_at
-    })
+    await updateLifeLog(payload)
     message.success('生活记录已更新')
     showDetailModal.value = false
     await load()
@@ -110,11 +83,11 @@ async function saveSelected() {
   }
 }
 
-async function deleteSelected() {
-  if (!selectedLog.value || !window.confirm('确认删除这条生活记录吗？')) return
+async function deleteSelected(id: number) {
+  if (!window.confirm('确认删除这条生活记录吗？')) return
   saving.value = true
   try {
-    await deleteLifeLog(selectedLog.value.id)
+    await deleteLifeLog(id)
     message.success('生活记录已删除')
     showDetailModal.value = false
     await load()

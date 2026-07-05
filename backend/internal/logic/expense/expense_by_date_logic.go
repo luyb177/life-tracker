@@ -50,34 +50,15 @@ func (l *ExpenseByDateLogic) ExpenseByDate(req *types.ExpenseByDateReq) (*types.
 		return nil, errorx.WrapDBQuery("查询支出记录失败", err)
 	}
 
-	// 批量查询分类（含系统默认）
-	categoryMap := make(map[uint64]types.ExpenseCategoryInfo)
 	categories, _ := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
-	for _, c := range categories {
-		categoryMap[c.ID] = types.ExpenseCategoryInfo{ID: c.ID, Name: c.Name, Type: c.Type}
-	}
+	categoryMap := categoryInfoMap(categories)
 
 	var total int64
-	items := make([]types.ExpenseLogInfo, 0, len(logs))
 	for _, log := range logs {
 		if log.Status == 0 {
 			total += log.Amount
 		}
-		items = append(items, types.ExpenseLogInfo{
-			ID:            log.ID,
-			Category:      categoryMap[log.CategoryID],
-			Amount:        log.Amount,
-			Note:          log.Note,
-			Location:      log.Location,
-			OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
-			Status:        log.Status,
-			RefundedAt:    formatTimePtr(log.RefundedAt, constvar.TimeLocation),
-			CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			LastUpdatedBy: log.LastUpdatedBy,
-			LastUpdatedAt: formatTime(log.LastUpdatedAt, constvar.TimeLocation),
-		})
 	}
 
-	return &types.ExpenseByDateResp{List: items, Total: total}, nil
+	return &types.ExpenseByDateResp{List: expenseLogInfos(logs, categoryMap), Total: total}, nil
 }

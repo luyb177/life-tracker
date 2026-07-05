@@ -12,7 +12,6 @@ import (
 	"github.com/luyb177/life-tracker/backend/internal/middleware"
 	"github.com/luyb177/life-tracker/backend/internal/pkg/pagetoken"
 	lifelog "github.com/luyb177/life-tracker/backend/internal/repo/lifelog"
-	"github.com/luyb177/life-tracker/backend/internal/repo/tag"
 	"github.com/luyb177/life-tracker/backend/internal/svc"
 	"github.com/luyb177/life-tracker/backend/internal/types"
 
@@ -101,28 +100,6 @@ func (l *ListLifeLogLogic) ListLifeLog(req *types.ListLifeLogReq) (resp *types.L
 		return nil, errorx.WrapDBQuery("查询标签失败", err)
 	}
 
-	items := make([]types.LifeLogInfo, 0, len(logs))
-	for _, log := range logs {
-		tags := tagMap[log.ID]
-		if tags == nil {
-			tags = []*tag.Tag{}
-		}
-		tagInfos := make([]types.TagInfo, 0, len(tags))
-		for _, t := range tags {
-			tagInfos = append(tagInfos, types.TagInfo{ID: t.ID, Name: t.Name})
-		}
-		items = append(items, types.LifeLogInfo{
-			ID:            log.ID,
-			Content:       log.Content,
-			Tags:          tagInfos,
-			OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
-			CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			LastUpdatedBy: log.LastUpdatedBy,
-			LastUpdatedAt: formatTime(log.LastUpdatedAt),
-		})
-	}
-
 	var nextToken string
 	if hasMore && len(logs) > 0 {
 		last := logs[len(logs)-1]
@@ -134,7 +111,7 @@ func (l *ListLifeLogLogic) ListLifeLog(req *types.ListLifeLogReq) (resp *types.L
 	}
 
 	return &types.ListLifeLogResp{
-		List:      items,
+		List:      lifeLogInfos(logs, tagMap),
 		PageToken: nextToken,
 		HasMore:   hasMore,
 	}, nil

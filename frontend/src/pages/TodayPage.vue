@@ -41,93 +41,30 @@
       />
     </div>
 
-    <n-modal v-model:show="showLifeModal" preset="dialog" title="生活记录详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="发生时间">
-          <n-date-picker
-            v-model:formatted-value="lifeEdit.occurred_at"
-            type="datetime"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            class="full-control"
-          />
-        </n-form-item>
-        <n-form-item label="内容">
-          <n-input v-model:value="lifeEdit.content" type="textarea" :autosize="{ minRows: 5, maxRows: 9 }" />
-        </n-form-item>
-        <p v-if="selectedLifeLog" class="detail-meta">
-          创建 {{ selectedLifeLog.created_at }} · 更新 {{ selectedLifeLog.last_updated_at || selectedLifeLog.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="savingDetail" @click="deleteSelectedLifeLog">删除</n-button>
-        <n-button @click="showLifeModal = false">取消</n-button>
-        <n-button type="primary" :loading="savingDetail" @click="saveSelectedLifeLog">保存</n-button>
-      </template>
-    </n-modal>
-
-    <n-modal v-model:show="showExpenseModal" preset="dialog" title="支出详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="发生时间">
-          <n-date-picker
-            v-model:formatted-value="expenseEdit.occurred_at"
-            type="datetime"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            class="full-control"
-          />
-        </n-form-item>
-        <div class="detail-two-columns">
-          <n-form-item label="金额">
-            <n-input-number v-model:value="expenseEdit.amount" :min="0" :precision="2" class="full-control">
-              <template #prefix>¥</template>
-            </n-input-number>
-          </n-form-item>
-          <n-form-item label="分类">
-            <n-select
-              v-model:value="expenseEdit.category_id"
-              :options="categoryOptions"
-              :loading="loadingCategories"
-              class="full-control"
-            />
-          </n-form-item>
-        </div>
-        <n-form-item label="备注">
-          <n-input v-model:value="expenseEdit.note" />
-        </n-form-item>
-        <p v-if="selectedExpense" class="detail-meta">
-          创建 {{ selectedExpense.created_at }} · 更新 {{ selectedExpense.last_updated_at || selectedExpense.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="savingDetail" @click="deleteSelectedExpense">删除</n-button>
-        <n-button v-if="selectedExpense?.status === 0" tertiary type="warning" :loading="savingDetail" @click="refundSelectedExpense">
-          退款
-        </n-button>
-        <n-button @click="showExpenseModal = false">取消</n-button>
-        <n-button type="primary" :loading="savingDetail" @click="saveSelectedExpense">保存</n-button>
-      </template>
-    </n-modal>
-
-    <n-modal v-model:show="showSummaryModal" preset="dialog" title="总结详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="标题">
-          <n-input v-model:value="summaryEdit.title" />
-        </n-form-item>
-        <n-form-item label="总结内容">
-          <n-input v-model:value="summaryEdit.summary_content" type="textarea" :autosize="{ minRows: 6, maxRows: 12 }" />
-        </n-form-item>
-        <n-form-item label="建议">
-          <n-input v-model:value="summaryEdit.suggestion_content" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" />
-        </n-form-item>
-        <p v-if="selectedSummary" class="detail-meta">
-          来源 {{ selectedSummary.source === 1 ? 'AI' : '用户' }} · 更新 {{ selectedSummary.last_updated_at || selectedSummary.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="savingDetail" @click="deleteSelectedSummary">删除</n-button>
-        <n-button @click="showSummaryModal = false">取消</n-button>
-        <n-button type="primary" :loading="savingDetail" @click="saveSelectedSummary">保存</n-button>
-      </template>
-    </n-modal>
+    <LifeLogDetailModal
+      v-model:show="showLifeModal"
+      :log="selectedLifeLog"
+      :loading="savingDetail"
+      @save="saveLifeLog"
+      @delete="deleteLifeLogByID"
+    />
+    <ExpenseDetailModal
+      v-model:show="showExpenseModal"
+      :expense="selectedExpense"
+      :categories="expenseCategories"
+      :loading="savingDetail"
+      :loading-categories="loadingCategories"
+      @save="saveExpense"
+      @delete="deleteExpenseByID"
+      @refund="refundSelectedExpense"
+    />
+    <SummaryDetailModal
+      v-model:show="showSummaryModal"
+      :summary="selectedSummary"
+      :loading="savingDetail"
+      @save="saveSummary"
+      @delete="deleteSummaryByID"
+    />
   </div>
 </template>
 
@@ -139,6 +76,9 @@ import MetricCard from '@/components/common/MetricCard.vue'
 import QuickLifeLogForm from '@/components/records/QuickLifeLogForm.vue'
 import QuickExpenseForm from '@/components/records/QuickExpenseForm.vue'
 import TimelineList, { type TimelineItem } from '@/components/records/TimelineList.vue'
+import ExpenseDetailModal from '@/components/records/ExpenseDetailModal.vue'
+import LifeLogDetailModal from '@/components/records/LifeLogDetailModal.vue'
+import SummaryDetailModal from '@/components/summary/SummaryDetailModal.vue'
 import SummaryPreview from '@/components/summary/SummaryPreview.vue'
 import { deleteLifeLog, getLifeLogsByDate, updateLifeLog } from '@/api/lifeLog'
 import {
@@ -151,7 +91,7 @@ import {
 import { deleteSummary, generateAISummary, rangeSummaries, updateSummary } from '@/api/summary'
 import type { ExpenseCategoryInfo, ExpenseLogInfo, LifeLogInfo, SummaryInfo } from '@/types/api'
 import { addDays, formatDate, isFutureDateTimestamp, relativeDateLabel } from '@/utils/date'
-import { fenToYuan, formatYuan, yuanToFen } from '@/utils/money'
+import { formatYuan } from '@/utils/money'
 
 const message = useMessage()
 const selectedDate = ref(formatDate())
@@ -170,18 +110,11 @@ const selectedExpense = ref<ExpenseLogInfo | null>(null)
 const selectedSummary = ref<SummaryInfo | null>(null)
 const expenseCategories = ref<ExpenseCategoryInfo[]>([])
 const loadingCategories = ref(false)
-const lifeEdit = ref({ content: '', occurred_at: '' })
-const expenseEdit = ref({ amount: 0, category_id: null as number | null, note: '', occurred_at: '' })
-const summaryEdit = ref({ title: '', summary_content: '', suggestion_content: '' })
 const dateTitle = computed(() => relativeDateLabel(selectedDate.value))
 
 const dailySummary = computed(
   () => summaries.value.find((item) => item.period_type === 1 && item.source === 1) || null
 )
-const categoryOptions = computed(() =>
-  expenseCategories.value.map((item) => ({ label: item.name, value: item.id }))
-)
-
 const timelineItems = computed<TimelineItem[]>(() => {
   const lifeItems = lifeLogs.value.map((item) => ({
     id: `life-${item.id}`,
@@ -230,10 +163,6 @@ function openTimelineDetail(item: TimelineItem) {
     const log = lifeLogs.value.find((entry) => entry.id === item.sequence)
     if (!log) return
     selectedLifeLog.value = log
-    lifeEdit.value = {
-      content: log.content,
-      occurred_at: log.occurred_at
-    }
     showLifeModal.value = true
     return
   }
@@ -241,23 +170,12 @@ function openTimelineDetail(item: TimelineItem) {
   const expense = expenses.value.find((entry) => entry.id === item.sequence)
   if (!expense) return
   selectedExpense.value = expense
-  expenseEdit.value = {
-    amount: fenToYuan(expense.amount),
-    category_id: expense.category.id,
-    note: expense.note,
-    occurred_at: expense.occurred_at
-  }
   void loadExpenseCategories()
   showExpenseModal.value = true
 }
 
 function openSummaryDetail(summary: SummaryInfo) {
   selectedSummary.value = summary
-  summaryEdit.value = {
-    title: summary.title || '',
-    summary_content: summary.summary_content,
-    suggestion_content: summary.suggestion_content || ''
-  }
   showSummaryModal.value = true
 }
 
@@ -272,15 +190,10 @@ async function loadExpenseCategories() {
   }
 }
 
-async function saveSelectedLifeLog() {
-  if (!selectedLifeLog.value || !lifeEdit.value.content.trim()) return
+async function saveLifeLog(payload: { id: number; content: string; occurred_at: string }) {
   savingDetail.value = true
   try {
-    await updateLifeLog({
-      id: selectedLifeLog.value.id,
-      content: lifeEdit.value.content.trim(),
-      occurred_at: lifeEdit.value.occurred_at
-    })
+    await updateLifeLog(payload)
     message.success('生活记录已更新')
     showLifeModal.value = false
     await loadToday()
@@ -291,11 +204,11 @@ async function saveSelectedLifeLog() {
   }
 }
 
-async function deleteSelectedLifeLog() {
-  if (!selectedLifeLog.value || !window.confirm('确认删除这条生活记录吗？')) return
+async function deleteLifeLogByID(id: number) {
+  if (!window.confirm('确认删除这条生活记录吗？')) return
   savingDetail.value = true
   try {
-    await deleteLifeLog(selectedLifeLog.value.id)
+    await deleteLifeLog(id)
     message.success('生活记录已删除')
     showLifeModal.value = false
     await loadToday()
@@ -306,17 +219,10 @@ async function deleteSelectedLifeLog() {
   }
 }
 
-async function saveSelectedExpense() {
-  if (!selectedExpense.value || !expenseEdit.value.category_id || expenseEdit.value.amount <= 0) return
+async function saveExpense(payload: { id: number; category_id: number; amount: number; note: string; occurred_at: string }) {
   savingDetail.value = true
   try {
-    await updateExpense({
-      id: selectedExpense.value.id,
-      category_id: expenseEdit.value.category_id,
-      amount: yuanToFen(expenseEdit.value.amount),
-      note: expenseEdit.value.note.trim(),
-      occurred_at: expenseEdit.value.occurred_at
-    })
+    await updateExpense(payload)
     message.success('支出已更新')
     showExpenseModal.value = false
     await loadToday()
@@ -327,17 +233,16 @@ async function saveSelectedExpense() {
   }
 }
 
-async function refundSelectedExpense() {
-  if (!selectedExpense.value) return
-  await refundTodayExpense(selectedExpense.value.id)
+async function refundSelectedExpense(id: number) {
+  await refundTodayExpense(id)
   showExpenseModal.value = false
 }
 
-async function deleteSelectedExpense() {
-  if (!selectedExpense.value || !window.confirm('确认删除这条支出记录吗？')) return
+async function deleteExpenseByID(id: number) {
+  if (!window.confirm('确认删除这条支出记录吗？')) return
   savingDetail.value = true
   try {
-    await deleteExpense(selectedExpense.value.id)
+    await deleteExpense(id)
     message.success('支出已删除')
     showExpenseModal.value = false
     await loadToday()
@@ -348,16 +253,10 @@ async function deleteSelectedExpense() {
   }
 }
 
-async function saveSelectedSummary() {
-  if (!selectedSummary.value || !summaryEdit.value.summary_content.trim()) return
+async function saveSummary(payload: { id: number; title: string; summary_content: string; suggestion_content: string }) {
   savingDetail.value = true
   try {
-    await updateSummary({
-      id: selectedSummary.value.id,
-      title: summaryEdit.value.title.trim(),
-      summary_content: summaryEdit.value.summary_content.trim(),
-      suggestion_content: summaryEdit.value.suggestion_content.trim()
-    })
+    await updateSummary(payload)
     message.success('总结已更新')
     showSummaryModal.value = false
     await loadToday()
@@ -368,11 +267,11 @@ async function saveSelectedSummary() {
   }
 }
 
-async function deleteSelectedSummary() {
-  if (!selectedSummary.value || !window.confirm('确认删除这条总结吗？')) return
+async function deleteSummaryByID(id: number) {
+  if (!window.confirm('确认删除这条总结吗？')) return
   savingDetail.value = true
   try {
-    await deleteSummary(selectedSummary.value.id)
+    await deleteSummary(id)
     message.success('总结已删除')
     showSummaryModal.value = false
     await loadToday()

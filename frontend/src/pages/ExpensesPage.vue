@@ -121,50 +121,15 @@
       </template>
     </n-modal>
 
-    <n-modal v-model:show="showExpenseModal" preset="dialog" title="支出详情" class="detail-modal">
-      <n-form class="detail-form" :show-label="true" label-placement="top">
-        <n-form-item label="发生时间">
-          <n-date-picker
-            v-model:formatted-value="expenseEdit.occurred_at"
-            type="datetime"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            class="full-control"
-          />
-        </n-form-item>
-        <div class="detail-two-columns">
-          <n-form-item label="金额">
-            <n-input-number v-model:value="expenseEdit.amount" :min="0" :precision="2" class="full-control">
-              <template #prefix>¥</template>
-            </n-input-number>
-          </n-form-item>
-          <n-form-item label="分类">
-            <n-select v-model:value="expenseEdit.category_id" :options="categoryOptions" class="full-control" />
-          </n-form-item>
-        </div>
-        <n-form-item label="备注">
-          <n-input v-model:value="expenseEdit.note" />
-        </n-form-item>
-        <p v-if="selectedExpense" class="detail-meta">
-          创建 {{ selectedExpense.created_at }} · 更新 {{ selectedExpense.last_updated_at || selectedExpense.updated_at }}
-        </p>
-      </n-form>
-      <template #action>
-        <n-button tertiary type="error" :loading="savingExpense" @click="deleteSelectedExpense">删除</n-button>
-        <n-button
-          v-if="selectedExpense?.status === 0"
-          tertiary
-          type="warning"
-          :loading="savingExpense"
-          @click="refundSelectedExpense"
-        >
-          退款
-        </n-button>
-        <n-button @click="showExpenseModal = false">取消</n-button>
-        <n-button type="primary" :loading="savingExpense" :disabled="!canSaveExpense" @click="saveSelectedExpense">
-          保存
-        </n-button>
-      </template>
-    </n-modal>
+    <ExpenseDetailModal
+      v-model:show="showExpenseModal"
+      :expense="selectedExpense"
+      :categories="categories"
+      :loading="savingExpense"
+      @save="saveSelectedExpense"
+      @delete="deleteSelectedExpense"
+      @refund="refundSelectedExpense"
+    />
   </div>
 </template>
 
@@ -176,6 +141,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import MetricCard from '@/components/common/MetricCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import ExpenseTrendChart, { type ExpenseTrendChartPoint } from '@/components/charts/ExpenseTrendChart.vue'
+import ExpenseDetailModal from '@/components/records/ExpenseDetailModal.vue'
 import {
   createExpenseCategory,
   deleteExpense,
@@ -195,7 +161,7 @@ import {
   nextYearStart,
   yearStart
 } from '@/utils/date'
-import { fenToYuan, formatYuan, yuanToFen } from '@/utils/money'
+import { formatYuan } from '@/utils/money'
 
 const message = useMessage()
 const date = ref(formatDate())
@@ -213,9 +179,6 @@ const creatingCategory = ref(false)
 const savingExpense = ref(false)
 const categoryName = ref('')
 const selectedExpense = ref<ExpenseLogInfo | null>(null)
-const expenseEdit = ref({ amount: 0, category_id: null as number | null, note: '', occurred_at: '' })
-const categoryOptions = computed(() => categories.value.map((item) => ({ label: item.name, value: item.id })))
-const canSaveExpense = computed(() => Boolean(expenseEdit.value.amount > 0 && expenseEdit.value.category_id))
 
 const trendTitle = computed(() => {
   if (trendMode.value === 'today') return `${date.value} 今日花销趋势`
@@ -312,12 +275,6 @@ function openCategoryModal() {
 
 function openExpenseDetail(item: ExpenseLogInfo) {
   selectedExpense.value = item
-  expenseEdit.value = {
-    amount: fenToYuan(item.amount),
-    category_id: item.category.id,
-    note: item.note,
-    occurred_at: item.occurred_at
-  }
   showExpenseModal.value = true
 }
 
@@ -349,17 +306,10 @@ async function refundRecord(id: number) {
   }
 }
 
-async function saveSelectedExpense() {
-  if (!selectedExpense.value || !canSaveExpense.value || !expenseEdit.value.category_id) return
+async function saveSelectedExpense(payload: { id: number; category_id: number; amount: number; note: string; occurred_at: string }) {
   savingExpense.value = true
   try {
-    await updateExpense({
-      id: selectedExpense.value.id,
-      category_id: expenseEdit.value.category_id,
-      amount: yuanToFen(expenseEdit.value.amount),
-      note: expenseEdit.value.note.trim(),
-      occurred_at: expenseEdit.value.occurred_at
-    })
+    await updateExpense(payload)
     message.success('支出已更新')
     showExpenseModal.value = false
     await load()
@@ -371,17 +321,16 @@ async function saveSelectedExpense() {
   }
 }
 
-async function refundSelectedExpense() {
-  if (!selectedExpense.value) return
-  await refundRecord(selectedExpense.value.id)
+async function refundSelectedExpense(id: number) {
+  await refundRecord(id)
   showExpenseModal.value = false
 }
 
-async function deleteSelectedExpense() {
-  if (!selectedExpense.value || !window.confirm('确认删除这条支出记录吗？')) return
+async function deleteSelectedExpense(id: number) {
+  if (!window.confirm('确认删除这条支出记录吗？')) return
   savingExpense.value = true
   try {
-    await deleteExpense(selectedExpense.value.id)
+    await deleteExpense(id)
     message.success('支出已删除')
     showExpenseModal.value = false
     await load()

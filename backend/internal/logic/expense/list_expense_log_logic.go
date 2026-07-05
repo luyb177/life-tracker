@@ -71,34 +71,12 @@ func (l *ListExpenseLogLogic) ListExpenseLog(req *types.ListExpenseLogReq) (*typ
 		logs = logs[:limit]
 	}
 
-	// 批量查询分类（含系统默认）
-	categoryMap := make(map[uint64]types.ExpenseCategoryInfo)
 	categories, err := l.svcCtx.Repos.Expense.FindCategoriesByUser(l.ctx, authUser.UserID)
 	if err != nil {
 		l.Errorf("find expense categories failed: %v", err)
 		return nil, errorx.WrapDBQuery("查询分类失败", err)
 	}
-	for _, c := range categories {
-		categoryMap[c.ID] = types.ExpenseCategoryInfo{ID: c.ID, Name: c.Name, Type: c.Type}
-	}
-
-	items := make([]types.ExpenseLogInfo, 0, len(logs))
-	for _, log := range logs {
-		items = append(items, types.ExpenseLogInfo{
-			ID:            log.ID,
-			Category:      categoryMap[log.CategoryID],
-			Amount:        log.Amount,
-			Note:          log.Note,
-			Location:      log.Location,
-			OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
-			Status:        log.Status,
-			RefundedAt:    formatTimePtr(log.RefundedAt, constvar.TimeLocation),
-			CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),
-			LastUpdatedBy: log.LastUpdatedBy,
-			LastUpdatedAt: formatTime(log.LastUpdatedAt, constvar.TimeLocation),
-		})
-	}
+	categoryMap := categoryInfoMap(categories)
 
 	var nextToken string
 	if hasMore && len(logs) > 0 {
@@ -111,7 +89,7 @@ func (l *ListExpenseLogLogic) ListExpenseLog(req *types.ListExpenseLogReq) (*typ
 	}
 
 	return &types.ListExpenseLogResp{
-		List:      items,
+		List:      expenseLogInfos(logs, categoryMap),
 		PageToken: nextToken,
 		HasMore:   hasMore,
 	}, nil
