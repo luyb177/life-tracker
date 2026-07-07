@@ -40,6 +40,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 
 	// 1.5 查地点分布
 	locationBreakdown := buildLocationBreakdown(ctx, svcCtx, userID, periodStart, periodEnd)
+	expenseDetailText := buildExpenseDetailContext(ctx, svcCtx, userID, periodStart, periodEnd)
 
 	// 2. 构建上下文（下级总结）
 	contextText := buildContext(ctx, svcCtx, periodType, userID, periodStart, periodEnd)
@@ -58,6 +59,8 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 总支出：%.2f 元
 分类明细：
 %s
+【支出明细】
+%s
 【地点分布】
 %s
 【用户记录】
@@ -71,6 +74,7 @@ func Run(ctx context.Context, svcCtx *svc.ServiceContext, periodType uint8, user
 		periodStart.Format("2006-01-02"), periodEnd.Format("2006-01-02"),
 		float64(totalExpense)/100,
 		formatCategoryBreakdown(categoryBreakdown),
+		expenseDetailText,
 		locationBreakdown,
 		journalText,
 		contextText,
@@ -128,7 +132,11 @@ func buildJournalContext(ctx context.Context, svcCtx *svc.ServiceContext, userID
 		if len([]rune(content)) > 300 {
 			content = string([]rune(content)[:300]) + "..."
 		}
-		sb.WriteString(fmt.Sprintf("【%s】%s\n", l.OccurredAt.Format("2006-01-02"), content))
+		location := strings.TrimSpace(l.Location)
+		if location == "" {
+			location = "未知"
+		}
+		sb.WriteString(fmt.Sprintf("【%s｜地点：%s】%s\n", l.OccurredAt.Format("2006-01-02 15:04"), location, content))
 	}
 	return sb.String()
 }
@@ -226,6 +234,57 @@ func formatCategoryBreakdown(ct []expenseRepo.CategoryTotal) string {
 	var sb strings.Builder
 	for _, c := range ct {
 		sb.WriteString(fmt.Sprintf("  %s：%.2f 元\n", c.CategoryName, float64(c.Total)/100))
+	}
+	return sb.String()
+}
+
+func buildExpenseDetailContext(ctx context.Context, svcCtx *svc.ServiceContext, userID uint64, start, end time.Time) string {
+	logs, err := svcCtx.Repos.Expense.ListLogsByDateRange(ctx, userID, start, end)
+	if err != nil || len(logs) == 0 {
+		return "  无支出明细\n"
+	}
+
+	categories, err := svcCtx.Repos.Expense.FindCategoriesByUser(ctx, userID)
+	categoryNames := make(map[uint64]string)
+	if err == nil {
+		for _, category := range categories {
+			categoryNames[category.ID] = category.Name
+		}
+	}
+
+	var sb strings.Builder
+	count := 0
+	for _, log := range logs {
+		if log.Status == 1 {
+			continue
+		}
+		count++
+		categoryName := strings.TrimSpace(categoryNames[log.CategoryID])
+		if categoryName == "" {
+			categoryName = "未分类"
+		}
+		note := strings.TrimSpace(log.Note)
+		if note == "" {
+			note = "无备注"
+		}
+		if len([]rune(note)) > 120 {
+			note = string([]rune(note)[:120]) + "..."
+		}
+		location := strings.TrimSpace(log.Location)
+		if location == "" {
+			location = "未知"
+		}
+		sb.WriteString(fmt.Sprintf(
+			"  【%s】%s %.2f 元；备注：%s；地点：%s\n",
+			log.OccurredAt.Format("2006-01-02 15:04"),
+			categoryName,
+			float64(log.Amount)/100,
+			note,
+			location,
+		))
+	}
+	if count == 0 {
+		return "  无支出明细\n"
 	}
 	return sb.String()
 }
