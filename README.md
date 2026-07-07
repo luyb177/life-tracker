@@ -43,7 +43,7 @@ life-tracker/
 │   └── src/utils/           # 日期、金额、Markdown、总结工具
 ├── docs/                    # 需求文档
 ├── docker-compose.yaml      # 部署编排
-├── build.sh                 # 后端镜像构建脚本
+├── build.sh                 # 后端 + 前端镜像构建脚本
 └── README.md
 ```
 
@@ -95,6 +95,28 @@ cd backend && go run cmd/cron/main.go cron summary -t 1
 # 前端类型检查 + 构建
 cd frontend && npm run build
 ```
+
+## Docker 部署
+
+`build.sh` 会同时构建并推送两份镜像：
+
+- `life-tracker`：Go API 服务与 cron 命令。
+- `life-tracker-web`：已内置前端 `dist` 和 nginx 配置的 Web 镜像。
+
+本地构建并推送：
+
+```bash
+./build.sh
+```
+
+服务器更新：
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+前端已经打进 `life-tracker-web` 镜像，不需要再手动复制 `frontend/dist`，也不需要在服务器运行 `npm run dev`。
 
 ## 自动 AI 总结
 
