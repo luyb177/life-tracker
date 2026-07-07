@@ -14,6 +14,7 @@
         {{ periodLabel(summary.period_type) }} · {{ summary.source === 1 ? 'AI' : '用户' }} · 更新
         {{ summary.last_updated_at || summary.updated_at }}
       </p>
+      <p v-if="locationText" class="detail-meta">地点 {{ locationText }}</p>
     </n-form>
     <template #action>
       <n-button tertiary type="error" :loading="loading" :disabled="!summary" @click="remove">删除</n-button>
@@ -26,7 +27,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { SummaryInfo } from '@/types/api'
-import { periodLabel } from '@/utils/summary'
+import { periodLabel, summaryLocationText } from '@/utils/summary'
 
 const props = defineProps<{ show: boolean; summary?: SummaryInfo | null; loading?: boolean }>()
 const emit = defineEmits<{
@@ -37,6 +38,7 @@ const emit = defineEmits<{
 
 const form = ref({ title: '', summary_content: '', suggestion_content: '' })
 const canSave = computed(() => Boolean(props.summary && form.value.summary_content.trim()))
+const locationText = computed(() => summaryLocationText(props.summary))
 
 watch(
   () => [props.summary, props.show] as const,

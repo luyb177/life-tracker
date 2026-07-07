@@ -35,6 +35,7 @@
               <strong class="summary-period">{{ summaryPeriodTitle(summary) }}</strong>
               <p v-if="summary.title" class="summary-subtitle">{{ summary.title }}</p>
               <p v-else class="summary-subtitle">{{ summaryPeriodRange(summary) }}</p>
+              <p v-if="summaryLocationText(summary)" class="record-location">地点：{{ summaryLocationText(summary) }}</p>
             </div>
             <span class="source-badge">{{ summary.source === 1 ? 'AI' : '用户' }}</span>
           </div>
@@ -114,6 +115,7 @@ import {
   currentPeriodStart,
   normalizePeriodStart,
   periodEnd,
+  summaryLocationText,
   summaryPeriodOptions,
   summaryPeriodRange,
   summaryPeriodTitle

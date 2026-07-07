@@ -75,7 +75,7 @@ func (l *CreateSummaryLogic) CreateSummary(req *types.CreateSummaryReq) (*types.
 		SummaryContent:    req.SummaryContent,
 		SuggestionContent: req.SuggestionContent,
 		Title:             strings.TrimSpace(req.Title),
-		Location:          middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
+		Location:          buildExpenseLocationSummary(l.ctx, l.svcCtx, authUser.UserID, startAt, endAt),
 		LastUpdatedBy:     authUser.UserID,
 		LastUpdatedAt:     now,
 	}

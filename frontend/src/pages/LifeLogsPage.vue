@@ -26,7 +26,10 @@
       />
       <div v-else class="record-list life-log-record-list">
         <article v-for="log in logs" :key="log.id" class="record-row interactive-record" @click="openDetail(log)">
-          <time>{{ log.occurred_at }}</time>
+          <div class="record-meta-row">
+            <time>{{ log.occurred_at }}</time>
+            <span v-if="log.location" class="record-location-inline">地点：{{ log.location }}</span>
+          </div>
           <p>{{ log.content }}</p>
           <div class="tag-row compact">
             <span v-for="tag in log.tags" :key="tag.id" class="chip readonly">{{ tag.name }}</span>

@@ -23,7 +23,10 @@
         :class="[item.type, { refunded: item.refunded }]"
         @click="$emit('select', item)"
       >
-        <div class="timeline-time">{{ item.time }}</div>
+        <div class="timeline-meta">
+          <div class="timeline-time">{{ item.time }}</div>
+          <div v-if="item.location" class="timeline-location">{{ item.location }}</div>
+        </div>
         <div>
           <div class="timeline-title-row">
             <strong>{{ item.title }}</strong>
@@ -64,6 +67,7 @@ export interface TimelineItem {
   sequence: number
   title: string
   description: string
+  location?: string
   amount?: string
   canRefund?: boolean
   refunded?: boolean

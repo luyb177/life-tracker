@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/luyb177/life-tracker/backend/common/errorx"
@@ -111,6 +113,42 @@ func resolveSummaryTags(ctx context.Context, svcCtx *svc.ServiceContext, summary
 		}
 	}
 	return svcCtx.Repos.Tag.BatchLinkSummary(ctx, summaryID, tagIDs, tx...)
+}
+
+// buildExpenseLocationSummary keeps manual summaries aligned with AI summaries:
+// the location field describes where spending happened during the period.
+func buildExpenseLocationSummary(ctx context.Context, svcCtx *svc.ServiceContext, userID uint64, start, end time.Time) string {
+	logs, err := svcCtx.Repos.Expense.ListLogsByDateRange(ctx, userID, start, end)
+	if err != nil || len(logs) == 0 {
+		return ""
+	}
+
+	locTotals := make(map[string]int64)
+	for _, log := range logs {
+		if log.Status == 1 || log.Amount <= 0 {
+			continue
+		}
+		loc := strings.TrimSpace(log.Location)
+		if loc == "" || loc == "未知" {
+			continue
+		}
+		locTotals[loc] += log.Amount
+	}
+	if len(locTotals) == 0 {
+		return ""
+	}
+
+	locations := make([]string, 0, len(locTotals))
+	for loc := range locTotals {
+		locations = append(locations, loc)
+	}
+	sort.Strings(locations)
+
+	parts := make([]string, 0, len(locations))
+	for _, loc := range locations {
+		parts = append(parts, fmt.Sprintf("%s：%.2f 元", loc, float64(locTotals[loc])/100))
+	}
+	return strings.Join(parts, "；")
 }
 
 // batchFillSummaryTags 批量填充 summary 的标签

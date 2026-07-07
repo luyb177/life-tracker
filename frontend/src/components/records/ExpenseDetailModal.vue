@@ -30,6 +30,7 @@
       <p v-if="expense" class="detail-meta">
         创建 {{ expense.created_at }} · 更新 {{ expense.last_updated_at || expense.updated_at }}
       </p>
+      <p v-if="expense?.location" class="detail-meta">地点 {{ expense.location }}</p>
     </n-form>
     <template #action>
       <n-button tertiary type="error" :loading="loading" :disabled="!expense" @click="remove">删除</n-button>

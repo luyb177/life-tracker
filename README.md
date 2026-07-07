@@ -124,3 +124,7 @@ docker compose run --rm life-tracker-cron cron summary -t 1 --config etc/life_tr
 
 - [后端 README](backend/README.md)
 - [前端 README](frontend/README.md)
+
+# TODO
+- [ ] AI总结还需要继续优化
+- [ ] 用户需求：假设我有一笔钱，在当日支出，之后会AA，这种情况要如何处理呢

@@ -15,6 +15,7 @@
       <p v-if="log" class="detail-meta">
         创建 {{ log.created_at }} · 更新 {{ log.last_updated_at || log.updated_at }}
       </p>
+      <p v-if="log?.location" class="detail-meta">地点 {{ log.location }}</p>
     </n-form>
     <template #action>
       <n-button tertiary type="error" :loading="loading" :disabled="!log" @click="remove">删除</n-button>

@@ -56,6 +56,7 @@ func (l *CreateLifeLogLogic) CreateLifeLog(req *types.CreateLifeLogReq) (resp *t
 		UserID:        authUser.UserID,
 		Content:       strings.TrimSpace(req.Content),
 		OccurredAt:    occurredAt,
+		Location:      middleware.FullLocation(middleware.GetIPLocation(l.ctx)),
 		LastUpdatedBy: authUser.UserID,
 		LastUpdatedAt: time.Now().In(constvar.TimeLocation),
 	}

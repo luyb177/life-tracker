@@ -18,6 +18,7 @@
     />
     <div v-else class="summary-content">
       <strong>{{ summary.title || '今日复盘' }}</strong>
+      <p v-if="locationText" class="record-location">地点：{{ locationText }}</p>
       <div class="markdown-body" v-html="summaryHtml" />
       <div v-if="suggestionHtml" class="markdown-body suggestion" v-html="suggestionHtml" />
     </div>
@@ -30,10 +31,12 @@ import { Sparkles } from '@lucide/vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { SummaryInfo } from '@/types/api'
 import { renderMarkdown } from '@/utils/markdown'
+import { summaryLocationText } from '@/utils/summary'
 
 const props = defineProps<{ summary?: SummaryInfo | null; loading?: boolean }>()
 defineEmits<{ generate: []; open: [summary: SummaryInfo] }>()
 
 const summaryHtml = computed(() => renderMarkdown(props.summary?.summary_content || ''))
 const suggestionHtml = computed(() => renderMarkdown(props.summary?.suggestion_content || ''))
+const locationText = computed(() => summaryLocationText(props.summary))
 </script>

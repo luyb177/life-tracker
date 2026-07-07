@@ -143,6 +143,7 @@ type LifeLogInfo struct {
 	ID            uint64    `json:"id"`
 	Content       string    `json:"content"`
 	Tags          []TagInfo `json:"tags,optional"`
+	Location      string    `json:"location,optional"`
 	OccurredAt    string    `json:"occurred_at"`
 	CreatedAt     string    `json:"created_at"`
 	UpdatedAt     string    `json:"updated_at"`

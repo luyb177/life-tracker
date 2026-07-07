@@ -38,6 +38,7 @@ func lifeLogInfo(log *lifelogRepo.LifeLog, tags []*tag.Tag) types.LifeLogInfo {
 		ID:            log.ID,
 		Content:       log.Content,
 		Tags:          tagInfos,
+		Location:      log.Location,
 		OccurredAt:    log.OccurredAt.In(constvar.TimeLocation).Format(time.DateTime),
 		CreatedAt:     log.CreatedAt.In(constvar.TimeLocation).Format(time.DateTime),
 		UpdatedAt:     log.UpdatedAt.In(constvar.TimeLocation).Format(time.DateTime),

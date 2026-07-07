@@ -23,6 +23,16 @@ export function summaryPeriodRange(summary: SummaryInfo) {
   return `${summary.period_start} 至 ${summary.period_end}`
 }
 
+export function summaryLocationText(summary?: Pick<SummaryInfo, 'location'> | null) {
+  const location = summary?.location?.trim()
+  if (!location || location === '未知' || location === '无地点记录') return ''
+  return location
+    .replace(/^地点[:：]\s*/, '')
+    .replace(/\s*\n+\s*/g, '；')
+    .replace(/；+/g, '；')
+    .replace(/^；|；$/g, '')
+}
+
 export function currentPeriodStart(periodType: number) {
   const today = new Date()
   if (periodType === 3) return monthStart(today)

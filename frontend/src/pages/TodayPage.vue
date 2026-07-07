@@ -125,6 +125,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     sequence: item.id,
     title: '生活记录',
     description: item.content,
+    location: item.location,
     tags: item.tags?.map((tag) => tag.name)
   }))
   const expenseItems = expenses.value.map((item) => ({
@@ -136,6 +137,7 @@ const timelineItems = computed<TimelineItem[]>(() => {
     sequence: item.id,
     title: item.category?.name || '支出',
     description: item.note || '未填写备注',
+    location: item.location,
     amount: formatYuan(item.amount),
     canRefund: item.status === 0,
     refunded: item.status === 1

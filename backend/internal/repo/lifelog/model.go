@@ -16,6 +16,7 @@ type LifeLog struct {
 	UserID     uint64    `gorm:"index:idx_user_date;type:bigint unsigned"`
 	Content    string    `gorm:"type:text"`
 	OccurredAt time.Time `gorm:"index:idx_user_date;type:datetime"`
+	Location   string    `gorm:"type:varchar(255)"`
 
 	LastUpdatedBy uint64    `gorm:"type:bigint unsigned;default:0"`
 	LastUpdatedAt time.Time `gorm:"type:datetime(3)"`

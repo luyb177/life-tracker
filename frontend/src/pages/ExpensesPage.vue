@@ -41,7 +41,10 @@
               @click="openExpenseDetail(item)"
             >
               <div>
-                <time>{{ item.occurred_at }}</time>
+                <div class="record-meta-row">
+                  <time>{{ item.occurred_at }}</time>
+                  <span v-if="item.location" class="record-location-inline">地点：{{ item.location }}</span>
+                </div>
                 <p>{{ item.category.name }} · {{ item.note || '无备注' }}</p>
                 <span v-if="item.status === 1" class="status-badge">已退款</span>
               </div>

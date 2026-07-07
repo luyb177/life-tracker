@@ -363,9 +363,21 @@ textarea {
   padding-top: 0;
 }
 
+.timeline-meta {
+  min-width: 0;
+}
+
 .timeline-time {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.timeline-location {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .timeline-title-row,
@@ -392,6 +404,31 @@ textarea {
 .timeline-item p {
   margin: 6px 0 0;
   color: #43504c;
+}
+
+.record-location {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.record-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.record-meta-row time {
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+.record-location-inline {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .timeline-amount {

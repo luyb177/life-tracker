@@ -132,6 +132,7 @@ CREATE TABLE `summaries` (
 -- ############################################################################
 -- 用户日常活动记录，同一天允许多条
 -- content   记录内容（logic 层限制最长 10000 字符）
+-- location  创建记录时的 IP 地理位置
 -- 标签      通过 life_log_tags → tags 关联表管理，不存于此表
 -- last_updated_by  最后更新人 (0=系统)
 -- last_updated_at  最后更新时间
@@ -144,6 +145,7 @@ CREATE TABLE `life_logs` (
     `user_id`         bigint unsigned,
     `content`         text,
     `occurred_at`     datetime,
+    `location`        varchar(255),
     `last_updated_by` bigint unsigned DEFAULT 0,
     `last_updated_at` datetime(3),
     PRIMARY KEY (`id`),
